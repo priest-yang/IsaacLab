@@ -31,9 +31,11 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
         self.scene.robot = FRANKA_OMRON_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
         # Set actions for the specific robot type (franka)
-        self.actions.arm_action = mdp.JointPositionActionCfg(
-            asset_name="robot", joint_names=["panda_joint.*"], scale=0.5, use_default_offset=True
-        )
+
+        # self.actions.arm_action = mdp.RelativeJointPositionActionCfg(
+        #     asset_name="robot", joint_names=["panda_joint[1-7]"], scale=0.5, use_zero_offset=False
+        # )
+        
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["panda_finger.*"],
@@ -43,7 +45,7 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
         self.actions.base_action = mdp.RelativeJointPositionActionCfg(
             asset_name="robot",
             joint_names=["mobilebase_.*"],
-            scale=0.2,
+            scale=0.01, #01,
             use_zero_offset=True, # use default offset is not working for base action
         )
         # Set the body name for the end effector
@@ -52,7 +54,7 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
         # Set Cube as object
         self.scene.object = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Object",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[1, 0, 0.855], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
                 scale=(0.8, 0.8, 0.8),

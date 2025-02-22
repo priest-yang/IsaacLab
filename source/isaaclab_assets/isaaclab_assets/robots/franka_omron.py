@@ -24,7 +24,7 @@ from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
 
 FRANKA_OMRON_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f'/home/johndoe/Documents/IsaacLab/source/isaaclab_assets/data/omron_franka.usd',
+        usd_path= '/home/johndoe/Documents/IsaacLab/source/isaaclab_assets/data/omron_franka_final.usd',
         activate_contact_sensors=False,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
@@ -36,6 +36,8 @@ FRANKA_OMRON_CFG = ArticulationCfg(
         # collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.005, rest_offset=0.0),
     ),
     init_state=ArticulationCfg.InitialStateCfg(
+        pos = (0, 0, 0),
+        rot = (1, 0, 0, 0),
         joint_pos={
             "panda_joint1": 0.0,
             "panda_joint2": -0.569,
