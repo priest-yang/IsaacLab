@@ -45,7 +45,7 @@ class FrankaRidgeCubeLiftEnvCfg(LiftEnvCfg):
         self.actions.base_action = mdp.RelativeJointPositionActionCfg(
             asset_name="robot",
             joint_names=["dummy_base.*"],
-            scale=0.1, #01,
+            scale=1, #01,
             use_zero_offset=True, # use default offset is not working for base action
         )
         # Set the body name for the end effector
