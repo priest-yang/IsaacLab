@@ -32,8 +32,8 @@ class FrankaRidgeCubeLiftEnvCfg(LiftEnvCfg):
 
         # Set actions for the specific robot type (franka)
 
-        self.actions.arm_action = mdp.RelativeJointPositionActionCfg(
-            asset_name="robot", joint_names=["panda_joint[1-7]"], scale=0.5, use_zero_offset=False
+        self.actions.arm_action = mdp.JointPositionActionCfg(
+            asset_name="robot", joint_names=["panda_joint[1-7]"], scale=0.5, use_default_offset=True
         )
         
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
@@ -45,7 +45,7 @@ class FrankaRidgeCubeLiftEnvCfg(LiftEnvCfg):
         self.actions.base_action = mdp.RelativeJointPositionActionCfg(
             asset_name="robot",
             joint_names=["dummy_base.*"],
-            scale=1, #01,
+            scale=0.1, #01,
             use_zero_offset=True, # use default offset is not working for base action
         )
         # Set the body name for the end effector
@@ -74,12 +74,12 @@ class FrankaRidgeCubeLiftEnvCfg(LiftEnvCfg):
         marker_cfg.markers["frame"].scale = (0.1, 0.1, 0.1)
         marker_cfg.prim_path = "/Visuals/FrameTransformer"
         self.scene.ee_frame = FrameTransformerCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/world",
+            prim_path="{ENV_REGEX_NS}/Robot/panda_mobile/world",
             debug_vis=True,
             visualizer_cfg=marker_cfg,
             target_frames=[
                 FrameTransformerCfg.FrameCfg(
-                    prim_path="{ENV_REGEX_NS}/Robot/endeffector",
+                    prim_path="{ENV_REGEX_NS}/Robot/panda_mobile/endeffector",
                     name="end_effector",
                     offset=OffsetCfg(
                         pos=[0.0, 0.0, 0.0],

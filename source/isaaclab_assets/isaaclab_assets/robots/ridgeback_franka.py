@@ -23,13 +23,13 @@ from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
 RIDGEBACK_FRANKA_PANDA_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"{ISAAC_NUCLEUS_DIR}/Robots/Clearpath/RidgebackFranka/ridgeback_franka.usd",
+        usd_path='/home/johndoe/Desktop/panda_mobile.usd', #f"{ISAAC_NUCLEUS_DIR}/Robots/Clearpath/RidgebackFranka/ridgeback_franka.usd",
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(enabled_self_collisions=True),
         activate_contact_sensors=False,
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos = (-0.2, 0, 0.6),
-        rot = (   0.7660444 , -0.6427876, 0, 0 ),
+        pos =  (-0.5, 0, 0.5), #(-0.2, 0, 0.6),
+        rot =  (1, 0, 0, 0), #(   0.7660444 , -0.6427876, 0, 0 ),
         joint_pos={
             # base
             "dummy_base_prismatic_y_joint": 0.0,
@@ -53,8 +53,8 @@ RIDGEBACK_FRANKA_PANDA_CFG = ArticulationCfg(
             joint_names_expr=["dummy_base_.*"],
             velocity_limit=100.0,
             effort_limit=1000.0,
-            stiffness=0.0,
-            damping=1e5,
+            stiffness=1e5,
+            damping=1e2,
         ),
         "panda_shoulder": ImplicitActuatorCfg(
             joint_names_expr=["panda_joint[1-4]"],

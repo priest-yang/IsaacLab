@@ -79,7 +79,7 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(1-0.2, 1+0.2), pos_y=(-0.25, 0.25), pos_z=(0.95, 1.15), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(1-0.8, 1-0.6), pos_y=(-0.25, 0.25), pos_z=(0.65, 0.85), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
 
@@ -126,7 +126,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.8, -0.5), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
         },
@@ -172,6 +172,13 @@ class TerminationsCfg:
     object_dropping = DoneTerm(
         func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
     )
+
+    far_from_object = DoneTerm(
+        func=mdp.root_far_from_object,
+        params={"distance": 5, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
+    )
+
+
 
 
 @configclass

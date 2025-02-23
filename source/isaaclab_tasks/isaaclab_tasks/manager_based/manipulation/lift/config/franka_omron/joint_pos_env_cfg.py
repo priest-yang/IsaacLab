@@ -23,6 +23,7 @@ from isaaclab_assets.robots.franka_omron import FRANKA_OMRON_CFG  # isort: skip
 
 @configclass
 class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
+
     def __post_init__(self):
         # post init of parents
         super().__post_init__()
@@ -32,10 +33,10 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
 
         # Set actions for the specific robot type (franka)
 
-        # self.actions.arm_action = mdp.RelativeJointPositionActionCfg(
-        #     asset_name="robot", joint_names=["panda_joint[1-7]"], scale=0.5, use_zero_offset=False
-        # )
-        
+        self.actions.arm_action = mdp.RelativeJointPositionActionCfg(
+            asset_name="robot", joint_names=["panda_joint[1-7]"], scale=0.5, use_zero_offset=False
+        )
+
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["panda_finger.*"],
@@ -87,6 +88,18 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
                 ),
             ],
         )
+
+        # update termination config use "mobilebase0_wheeled_base" pos as robot pos
+        from isaaclab.managers import TerminationTermCfg as DoneTerm
+        from isaaclab.managers import SceneEntityCfg
+        self.terminations.far_from_object = DoneTerm(
+        func=mdp.root_far_from_object,
+        params={"distance": 2, 
+                "asset_cfg": SceneEntityCfg("robot"), 
+                "object_cfg": SceneEntityCfg("object"), 
+                "key": "mobilebase0_wheeled_base"
+                },
+    )
 
 
 @configclass
