@@ -24,7 +24,7 @@ from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
 
 FRANKA_OMRON_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path= '/home/johndoe/Documents/IsaacLab/source/isaaclab_assets/data/omron_franka_final.usd',
+        usd_path= '/home/johndoe/Desktop/final.usd', #'/home/johndoe/Documents/IsaacLab/source/isaaclab_assets/data/omron_franka_final.usd',
         activate_contact_sensors=False,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
