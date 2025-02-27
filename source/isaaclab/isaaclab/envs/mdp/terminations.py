@@ -73,7 +73,7 @@ def root_height_below_minimum(
 
 
 def root_far_from_object(
-    env: ManagerBasedRLEnv, distance: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"), object_cfg: SceneEntityCfg = SceneEntityCfg("object"), key="world"
+    env: ManagerBasedRLEnv, distance: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"), object_cfg: SceneEntityCfg = SceneEntityCfg("object"), key=None
 ) -> torch.Tensor:
     """Terminate when the asset's root position is farther than the specified distance from the target.
 
@@ -84,8 +84,11 @@ def root_far_from_object(
     asset: RigidObject = env.scene[asset_cfg.name]
     target: RigidObject = env.scene[object_cfg.name]
 
-    key_index = asset.data.body_names.index(key)
-    root_pos = asset.data.body_com_pos_w[:, key_index]
+    if key is None:
+        root_pos = asset.data.root_pos_w[:, :3]
+    else:
+        key_index = asset.data.body_names.index(key)
+        root_pos = asset.data.body_com_pos_w[:, key_index]
     # breakpoint()
     return torch.linalg.norm(root_pos - target.data.root_pos_w, dim=-1) > distance
 

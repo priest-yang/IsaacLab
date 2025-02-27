@@ -45,7 +45,7 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[1, 0, 0.5], rot=[0.707, 0, 0, 0.707]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[1, 0, 0.8], rot=[0.707, 0, 0, 0.707]),
         # init_state=AssetBaseCfg.InitialStateCfg(pos=[1, 0, 0], rot=[0.707, 0, 0, 0.707]),
         spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
     )
@@ -79,7 +79,7 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(1-0.8, 1-0.6), pos_y=(-0.25, 0.25), pos_z=(0.65, 0.85), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(1-0.8, 1-0.6), pos_y=(-0.25, 0.25), pos_z=(0.65+0.3, 0.85+0.3), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
 
@@ -104,8 +104,25 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
+        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame) 
+         
+        # modified to floating basis
+        object_position_in_robot_frame = ObsTerm(
+            func=mdp.object_position_in_robot_root_frame,
+            params={
+                    "key": "mobilebase0_wheeled_base"
+                    },
+        )
         target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        
+        # modifyd to floating basis
+        target_object_position_in_robot_frame = ObsTerm(
+            func=mdp.target_object_position_in_robot_root_frame, params={
+                "robot_cfg": SceneEntityCfg("robot"),
+                "command_name": "object_pose",
+                "key": "mobilebase0_wheeled_base"   
+            }
+        )
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
@@ -162,6 +179,14 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
+    floating_base_close_to_object = RewTerm(
+        func=mdp.floating_base_close_to_object,
+        params={"ref_distance": 1.0, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
+        weight=1e-1,
+    )
+
+
+
 
 @configclass
 class TerminationsCfg:
@@ -177,6 +202,8 @@ class TerminationsCfg:
         func=mdp.root_far_from_object,
         params={"distance": 5, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
     )
+
+
 
 
 

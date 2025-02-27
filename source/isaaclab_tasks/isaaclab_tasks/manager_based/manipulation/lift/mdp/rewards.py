@@ -65,3 +65,41 @@ def object_goal_distance(
     distance = torch.norm(des_pos_w - object.data.root_pos_w[:, :3], dim=1)
     # rewarded if the object is lifted above the threshold
     return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
+
+
+
+def floating_base_close_to_object(
+    env: ManagerBasedRLEnv,
+    ref_distance: torch.Tensor,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    key: str | None = None,
+) -> torch.Tensor:
+    """
+    Reward the agent for the floating base being close to the object.
+    Only check x,y distance.
+    if dis < ref_distance, reward = 0
+    # smooth penalty
+    else penalty = log(dis+1) / log(ref_distance+1)
+    """
+    # extract the used quantities (to enable type-hinting)
+    robot: RigidObject = env.scene[asset_cfg.name]
+    object: RigidObject = env.scene[object_cfg.name]
+    # get the floating base position
+    if key is None:
+        floating_base_pos = robot.data.root_pos_w[:, :2]
+    else:
+        key_index = robot.data.body_names.index(key)
+        floating_base_pos = robot.data.body_com_pos_w[:, key_index, :2]
+    # get the object position
+    object_pos = object.data.root_pos_w[:, :2]
+    # compute the distance
+    distance = torch.norm(floating_base_pos - object_pos, dim=1)
+    # compute the reward
+    if isinstance(ref_distance, torch.Tensor):
+        ref_distance = ref_distance.to(distance.device)
+    else:
+        ref_distance = torch.tensor(ref_distance, device=distance.device)
+
+    reward = torch.where(distance < ref_distance, 0.0, torch.log(distance + 1.0) / torch.log(ref_distance + 1.0))
+    return reward

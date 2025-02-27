@@ -89,17 +89,41 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
             ],
         )
 
+
+        self.floating_base_key = "mobilebase0_wheeled_base"
+
+        from isaaclab.managers import SceneEntityCfg
+        
+        # Obs
+        
         # update termination config use "mobilebase0_wheeled_base" pos as robot pos
         from isaaclab.managers import TerminationTermCfg as DoneTerm
-        from isaaclab.managers import SceneEntityCfg
+        # (change to "mobilebase0_wheeled_base" for floating based termination)
         self.terminations.far_from_object = DoneTerm(
         func=mdp.root_far_from_object,
         params={"distance": 2, 
                 "asset_cfg": SceneEntityCfg("robot"), 
                 "object_cfg": SceneEntityCfg("object"), 
-                "key": "mobilebase0_wheeled_base"
+                "key": self.floating_base_key
                 },
-    )
+        )
+
+        # reward: floating base close to object
+        from isaaclab.managers import RewardTermCfg as RewTerm
+        self.rewards.floating_base_close_to_object = RewTerm(
+            func=mdp.floating_base_close_to_object,
+            params={"ref_distance": 1.0, 
+                    "asset_cfg": SceneEntityCfg("robot"), 
+                    "object_cfg": SceneEntityCfg("object"),
+                    "key": self.floating_base_key
+                    },
+            weight=1e-1,
+        )
+
+
+
+
+
 
 
 @configclass
