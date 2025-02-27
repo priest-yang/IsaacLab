@@ -154,9 +154,9 @@ class EventCfg:
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
+    reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=2.0)
 
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.04}, weight=15.0)
+    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.04 + 0.8210}, weight=15.0)
 
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
@@ -179,11 +179,11 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
-    floating_base_close_to_object = RewTerm(
-        func=mdp.floating_base_close_to_object,
-        params={"ref_distance": 1.0, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
-        weight=1e-1,
-    )
+    # floating_base_close_to_object = RewTerm(
+    #     func=mdp.floating_base_close_to_object,
+    #     params={"ref_distance": 1.0, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
+    #     weight=1e-1,
+    # )
 
 
 
