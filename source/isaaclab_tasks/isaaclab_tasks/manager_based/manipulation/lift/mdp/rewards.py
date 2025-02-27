@@ -101,5 +101,5 @@ def floating_base_close_to_object(
     else:
         ref_distance = torch.tensor(ref_distance, device=distance.device)
 
-    reward = torch.where(distance < ref_distance, 0.0, torch.log(distance + 1.0) / torch.log(ref_distance + 1.0))
+    reward = torch.where(distance < ref_distance, 0.0, -torch.log(distance + 1.0) / torch.log(ref_distance + 1.0))
     return reward
