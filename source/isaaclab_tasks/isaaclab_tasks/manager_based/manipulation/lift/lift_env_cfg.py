@@ -179,6 +179,8 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
+    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
+
     # floating_base_close_to_object = RewTerm(
     #     func=mdp.floating_base_close_to_object,
     #     params={"ref_distance": 1.0, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
@@ -195,13 +197,13 @@ class TerminationsCfg:
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
     object_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
+        func=mdp.root_height_below_minimum, params={"minimum_height": 0.8210-0.1, "asset_cfg": SceneEntityCfg("object")}
     )
 
-    far_from_object = DoneTerm(
-        func=mdp.root_far_from_object,
-        params={"distance": 5, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
-    )
+    # far_from_object = DoneTerm(
+    #     func=mdp.root_far_from_object,
+    #     params={"distance": 5, "asset_cfg": SceneEntityCfg("robot"), "object_cfg": SceneEntityCfg("object")},
+    # )
 
 
 
