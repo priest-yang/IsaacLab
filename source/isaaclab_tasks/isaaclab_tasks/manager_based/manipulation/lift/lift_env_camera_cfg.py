@@ -72,9 +72,9 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     # <camera name="robot0_agentview_right" pos="-0.5 -0.35 1.05" quat="0.677509 0.376787 -0.299353 -0.556239" fovy="60"/>
     # <camera name="robot0_eye_in_hand" pos="0.05 0 0" quat="0 0.707107 0.707107 0" fovy="75"/>
 
-    agentview_left_camera: CameraCfg = CameraCfg(
+    agentview_left_camera: TiledCameraCfg = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/omron_v2/mobilebase0_support/agentview_left",
-        offset=CameraCfg.OffsetCfg(pos=(-0.5, 0.35, 1.05), rot=(0.556238, 0.299353, -0.376787, -0.677509)),
+        offset=TiledCameraCfg.OffsetCfg(pos=(-0.5, 0.35, 1.05), rot=(0.556238, 0.299353, -0.376787, -0.677509), convention="world"),
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0,
@@ -87,9 +87,9 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         height=512,
     )
 
-    agentview_right_camera: CameraCfg = CameraCfg(
+    agentview_right_camera: TiledCameraCfg = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/omron_v2/mobilebase0_support/agentview_right",
-        offset=CameraCfg.OffsetCfg(pos=(-0.5, -0.35, 1.05), rot=(0.677509, 0.376787, -0.299353, -0.556239)),
+        offset=TiledCameraCfg.OffsetCfg(pos=(-0.5, -0.35, 1.05), rot=(0.677509, 0.376787, -0.299353, -0.556239), convention="world"),
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0,
@@ -102,9 +102,9 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         height=512,
     )
 
-    eye_in_hand_camera: CameraCfg = CameraCfg(
+    eye_in_hand_camera: TiledCameraCfg = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/omron_v2/Franka/panda_hand/eye_in_hand",
-        offset=CameraCfg.OffsetCfg(pos=(0.05, 0, 0), rot=(0, 0.707107, 0.707107, 0)),
+        offset=TiledCameraCfg.OffsetCfg(pos=(0.05, 0, 0), rot=(0, 0.707107, 0.707107, 0)),
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0,

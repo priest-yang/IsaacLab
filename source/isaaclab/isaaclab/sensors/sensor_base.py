@@ -195,6 +195,10 @@ class SensorBase(ABC):
         self._is_outdated[env_ids] = True
 
     def update(self, dt: float, force_recompute: bool = False):
+
+        if not hasattr(self, "_timestamp"):
+            self._initialize_impl()
+            
         # Update the timestamp for the sensors
         self._timestamp += dt
         self._is_outdated |= self._timestamp - self._timestamp_last_update + 1e-6 >= self.cfg.update_period
