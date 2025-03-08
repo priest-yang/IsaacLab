@@ -66,15 +66,20 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
     )
 
 
+    # camera
+
     # add camera
     # <camera name="robot0_agentview_center" pos="-0.6 0 1.15" quat="0.636946 0.332519 -0.319924 -0.61756"/>
     # <camera name="robot0_agentview_left" pos="-0.5 0.35 1.05" quat="0.556238 0.299353 -0.376787 -0.677509" fovy="60"/>
     # <camera name="robot0_agentview_right" pos="-0.5 -0.35 1.05" quat="0.677509 0.376787 -0.299353 -0.556239" fovy="60"/>
     # <camera name="robot0_eye_in_hand" pos="0.05 0 0" quat="0 0.707107 0.707107 0" fovy="75"/>
 
-    agentview_left_camera: TiledCameraCfg = TiledCameraCfg(
+
+    agentview_left_camera = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/omron_v2/mobilebase0_support/agentview_left",
-        offset=TiledCameraCfg.OffsetCfg(pos=(-0.5, 0.35, 1.05), rot=(0.556238, 0.299353, -0.376787, -0.677509), convention="world"),
+        offset=TiledCameraCfg.OffsetCfg(pos=(-0.5, 0.35, 1.05), 
+                                        rot=(0.556238, 0.299353, -0.376787, -0.677509), 
+                                        convention="opengl"),
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0,
@@ -87,9 +92,9 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         height=512,
     )
 
-    agentview_right_camera: TiledCameraCfg = TiledCameraCfg(
+    agentview_right_camera = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/omron_v2/mobilebase0_support/agentview_right",
-        offset=TiledCameraCfg.OffsetCfg(pos=(-0.5, -0.35, 1.05), rot=(0.677509, 0.376787, -0.299353, -0.556239), convention="world"),
+        offset=TiledCameraCfg.OffsetCfg(pos=(-0.5, -0.35, 1.05), rot=(0.677509, 0.376787, -0.299353, -0.556239), convention="opengl"),
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0,
@@ -102,9 +107,9 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         height=512,
     )
 
-    eye_in_hand_camera: TiledCameraCfg = TiledCameraCfg(
+    eye_in_hand_camera = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/omron_v2/Franka/panda_hand/eye_in_hand",
-        offset=TiledCameraCfg.OffsetCfg(pos=(0.05, 0, 0), rot=(0, 0.707107, 0.707107, 0)),
+        offset=TiledCameraCfg.OffsetCfg(pos=(0.05, 0, 0), rot=(0, 0.707107, 0.707107, 0), convention="opengl"),
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0,
@@ -116,6 +121,11 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         width=512,
         height=512,
     )
+
+    # # camera viz
+    # agentview_left_camera_viz: FrameTransformerCfg = MISSING
+    # agentview_right_camera_viz: FrameTransformerCfg = MISSING
+    # eye_in_hand_camera_viz: FrameTransformerCfg = MISSING
 
 
 

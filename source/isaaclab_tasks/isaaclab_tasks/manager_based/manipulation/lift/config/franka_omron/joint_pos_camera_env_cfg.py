@@ -70,6 +70,7 @@ class FrankaOmronCubeLiftCameraEnvCfg(LiftEnvCameraCfg):
             ),
         )
 
+
         # Listens to the required transforms
         marker_cfg = FRAME_MARKER_CFG.copy()
         marker_cfg.markers["frame"].scale = (0.1, 0.1, 0.1)
@@ -88,6 +89,58 @@ class FrankaOmronCubeLiftCameraEnvCfg(LiftEnvCameraCfg):
                 ),
             ],
         )
+
+
+
+        # self.scene.agentview_left_camera_viz = FrameTransformerCfg(
+        #     prim_path="{ENV_REGEX_NS}/Robot/omron_v2/world",
+        #     debug_vis=True,
+        #     visualizer_cfg=marker_cfg,
+        #     target_frames=[
+        #         FrameTransformerCfg.FrameCfg(
+        #             prim_path="{ENV_REGEX_NS}/Robot/omron_v2/mobilebase0_support",
+        #             name="agentview_left_viz",
+        #             offset=OffsetCfg(
+        #                 pos=(-0.5, 0.35, 1.05),
+        #                 rot=(0.556238, 0.299353, -0.376787, -0.677509),
+        #             )
+        #         ),
+        #     ],
+        # )
+
+        # self.scene.agentview_right_camera_viz = FrameTransformerCfg(
+        #     prim_path="{ENV_REGEX_NS}/Robot/omron_v2/world",
+        #     debug_vis=True,
+        #     visualizer_cfg=marker_cfg,
+        #     target_frames=[
+        #         FrameTransformerCfg.FrameCfg(
+        #             prim_path="{ENV_REGEX_NS}/Robot/omron_v2/mobilebase0_support",
+        #             name="agentview_right_viz",
+        #             offset=OffsetCfg(
+        #                 pos=(-0.5, -0.35, 1.05),
+        #                 rot=(0.677509, 0.376787, -0.299353, -0.556239),
+        #             )
+        #         ),
+        #     ],
+        # )
+
+        # self.scene.eye_in_hand_camera_viz = FrameTransformerCfg(
+        #     prim_path="{ENV_REGEX_NS}/Robot/omron_v2/world",
+        #     debug_vis=True,
+        #     visualizer_cfg=marker_cfg,
+        #     target_frames=[
+        #         FrameTransformerCfg.FrameCfg(
+        #             prim_path="{ENV_REGEX_NS}/Robot/omron_v2/Franka/panda_hand",
+        #             name="eye_in_hand",
+        #             offset=OffsetCfg(
+        #                 pos=(0.05, 0, 0),
+        #                 rot=(0, 0.707107, 0.707107, 0),
+        #             )
+        #         ),
+        #     ],
+        # )
+        
+        
 
 
         self.floating_base_key = "mobilebase0_wheeled_base"
