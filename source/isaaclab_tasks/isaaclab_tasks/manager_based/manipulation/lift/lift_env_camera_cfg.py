@@ -85,11 +85,12 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
             focal_length=24.0,
             focus_distance=400.0,
             horizontal_aperture=27.7,  # Adjusted for 60° FOV
-            clipping_range=(0.1, 20.0),
+            clipping_range=(0.1, 1.0e5), 
             lock_camera=True
         ),
-        width=512,
-        height=512,
+        width=224,
+        height=224,
+        update_period=0.01 * 2,
     )
 
     agentview_right_camera = TiledCameraCfg(
@@ -100,11 +101,12 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
             focal_length=24.0,
             focus_distance=400.0,
             horizontal_aperture=27.7,  # Adjusted for 60° FOV
-            clipping_range=(0.1, 20.0),
+            clipping_range=(0.1, 1.0e5), 
             lock_camera=True
         ),
-        width=512,
-        height=512,
+        width=224,
+        height=224,
+        update_period=0.01 * 2,
     )
 
     eye_in_hand_camera = TiledCameraCfg(
@@ -115,11 +117,12 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
             focal_length=24.0,
             focus_distance=400.0,
             horizontal_aperture=36.83,  # For a 75° FOV (assuming square image)
-            clipping_range=(0.01, 10.0),  # Closer clipping for hand camera
+            clipping_range=(0.01, 50.0),  # Closer clipping for hand camera
             lock_camera=True
         ),
-        width=512,
-        height=512,
+        width=224,
+        height=224,
+        update_period=0.01 * 2,
     )
 
     # # camera viz
@@ -143,7 +146,7 @@ class CommandsCfg:
         asset_name="robot",
         body_name=MISSING,  # will be set by agent env cfg
         resampling_time_range=(5.0, 5.0),
-        debug_vis=True,
+        # debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
             pos_x=(1-0.8, 1-0.6), pos_y=(-0.25, 0.25), pos_z=(0.65+0.3, 0.85+0.3), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
@@ -191,10 +194,11 @@ class ObservationsCfg:
         )
         actions = ObsTerm(func=mdp.last_action)
 
+
         # add camera observations
-        agentview_left_rgb = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("agentview_left_camera"), "data_type": "rgb"})
-        agentview_right_rgb = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("agentview_right_camera"), "data_type": "rgb"})
-        eye_in_hand_rgb = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("eye_in_hand_camera"), "data_type": "rgb"})
+        agentview_left_rgb = ObsTerm(func=mdp.raw_image, params={"sensor_cfg": SceneEntityCfg("agentview_left_camera"), "data_type": "rgb"})
+        agentview_right_rgb = ObsTerm(func=mdp.raw_image, params={"sensor_cfg": SceneEntityCfg("agentview_right_camera"), "data_type": "rgb"})
+        eye_in_hand_rgb = ObsTerm(func=mdp.raw_image, params={"sensor_cfg": SceneEntityCfg("eye_in_hand_camera"), "data_type": "rgb"})
 
 
         def __post_init__(self):

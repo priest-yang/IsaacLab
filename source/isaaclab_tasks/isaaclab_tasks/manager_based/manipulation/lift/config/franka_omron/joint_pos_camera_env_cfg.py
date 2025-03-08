@@ -77,7 +77,7 @@ class FrankaOmronCubeLiftCameraEnvCfg(LiftEnvCameraCfg):
         marker_cfg.prim_path = "/Visuals/FrameTransformer"
         self.scene.ee_frame = FrameTransformerCfg(
             prim_path="{ENV_REGEX_NS}/Robot/omron_v2/world",
-            debug_vis=True,
+            # debug_vis=True,
             visualizer_cfg=marker_cfg,
             target_frames=[
                 FrameTransformerCfg.FrameCfg(
@@ -89,6 +89,7 @@ class FrankaOmronCubeLiftCameraEnvCfg(LiftEnvCameraCfg):
                 ),
             ],
         )
+
 
 
 
