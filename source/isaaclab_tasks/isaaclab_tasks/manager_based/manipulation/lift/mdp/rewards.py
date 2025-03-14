@@ -25,6 +25,26 @@ def object_is_lifted(
     return torch.where(object.data.root_pos_w[:, 2] > minimal_height, 1.0, 0.0)
 
 
+def object_is_lifted_and_in_gripper(
+    env: ManagerBasedRLEnv, minimal_height: float, object_cfg: SceneEntityCfg = SceneEntityCfg("object"), ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame")
+) -> torch.Tensor:
+    """Reward the agent for lifting the object above the minimal height."""
+    object: RigidObject = env.scene[object_cfg.name]
+    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
+    # get the object position
+    object_pos = object.data.root_pos_w[:, :3]
+    # get the ee position
+    ee_pos = ee_frame.data.target_pos_w[..., 0, :]
+    # compute the distance
+    distance = torch.norm(object_pos - ee_pos, dim=1)
+    # check if the object is lifted above the minimal height
+    is_lifted = object.data.root_pos_w[:, 2] > minimal_height
+    # check if the object is in the gripper
+    is_in_gripper = distance < 0.1
+    # return the reward
+    return is_lifted * is_in_gripper
+
+
 def object_ee_distance(
     env: ManagerBasedRLEnv,
     std: float,

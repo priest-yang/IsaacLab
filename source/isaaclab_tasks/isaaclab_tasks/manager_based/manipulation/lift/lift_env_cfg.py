@@ -113,6 +113,7 @@ class ObservationsCfg:
                     "key": "mobilebase0_wheeled_base"
                     },
         )
+        
         target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         
         # modifyd to floating basis
@@ -156,7 +157,9 @@ class RewardsCfg:
 
     reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=2.0)
 
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.04 + 0.8210}, weight=15.0)
+    lifting_object = RewTerm(func=mdp.object_is_lifted_and_in_gripper, 
+                             params={"minimal_height": 0.04 + 0.8210, "ee_frame_cfg": SceneEntityCfg("ee_frame")}, 
+                             weight=15.0)
 
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
