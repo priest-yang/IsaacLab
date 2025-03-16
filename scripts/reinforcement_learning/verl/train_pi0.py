@@ -160,21 +160,28 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         obs, rewards, dones, infos = env.step(zero_actions.to(env.device))
 
 
-    policy_path = "/home/dana/isaacsim/isaacsim/isaaclab/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/lift_env_camera_cfg.py"
-    batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
     
     # load policy
     from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
     from lerobot.common.policies.factory import make_policy
     from lerobot.configs.policies import PreTrainedConfig
-    policy: PreTrainedPolicy = load_pi0_policy(policy_path, batch)
+    batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
+    policy_path = "/home/dana/isaacsim/isaacsim/isaaclab/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/lift_env_camera_cfg.py"
+    meta_path = "/home/dana/isaacsim/isaacsim/isaaclab/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/lift_env_camera_cfg.py"
+    policy = load_pi0_policy(policy_path, batch, meta_path)
 
+    roll_out_nums = 100
+    roll_out_iter = 0
 
-    while True:
+    while roll_out_iter < roll_out_nums:
+    # while True:
         # start = time.time()
         # Rollout
         with torch.inference_mode():
             for i in range(num_steps_per_env):
+
+                roll_out_iter += 1
+
                 # actions = runner.alg.act(obs, critic_obs)
                 # pesudo actions
                 actions = policy.select_action(batch)
@@ -186,9 +193,27 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 if isinstance(obs, dict):
                     import cv2
                     import numpy as np
+                    import os
+                    from datetime import datetime
                     
                     # viz camera
                     env_id = 0
+                    
+                    # Initialize video writer on first iteration
+                    if i == 0:
+                        # Create videos directory if it doesn't exist
+                        video_dir = os.path.join(log_dir, "videos", "observation_viz")
+                        os.makedirs(video_dir, exist_ok=True)
+                        
+                        # Create timestamped filename
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        video_path = os.path.join(video_dir, f"camera_observations_{timestamp}.mp4")
+                        
+                        # Get FPS setting (adjust as needed)
+                        fps = 30
+                        
+                        # Video writer will be initialized after we create the first canvas
+                        video_writer = None
                     
                     # Collect images and their keys
                     images_with_keys = []
@@ -252,15 +277,36 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                             # Draw text
                             cv2.putText(canvas, key, (text_x, text_y), font, font_scale, font_color, font_thickness)
                         
-                        # Display the canvas
-                        cv2.imshow('Camera Observations', canvas)
+                        # Initialize video writer on first frame
+                        if i == 0 and video_writer is None:
+                            # Use mp4v codec (MPEG-4)
+                            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                            video_writer = cv2.VideoWriter(
+                                video_path, fourcc, fps, 
+                                (canvas.shape[1], canvas.shape[0])
+                            )
+                            print(f"Recording visualization to: {video_path}")
                         
-                        # Wait for 1ms for window update and check if user pressed 'q' to quit
-                        key = cv2.waitKey(1)
-                        if key == ord('q'):
-                            print("Visualization stopped by user")
-                            break
-                
+                        # Write the current frame to video
+                        if video_writer is not None:
+                            video_writer.write(canvas)
+                        
+                        # # Display the canvas
+                        # cv2.imshow('Camera Observations', canvas)
+                        
+                        # # Wait for 1ms for window update and check if user pressed 'q' to quit
+                        # key = cv2.waitKey(1)
+                        # if key == ord('q'):
+                        #     print("Visualization stopped by user")
+                        #     # Release video writer
+                        #     if video_writer is not None:
+                        #         video_writer.release()
+                        #     break
+            
+    # Release video writer at the end of rollout
+    if 'video_writer' in locals() and video_writer is not None:
+        video_writer.release()
+        print(f"Saved visualization video to: {video_path}")
 
 
                 # # move to the right device

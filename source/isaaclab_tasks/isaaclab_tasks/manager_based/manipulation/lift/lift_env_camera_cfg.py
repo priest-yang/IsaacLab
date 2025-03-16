@@ -90,7 +90,7 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         ),
         width=224,
         height=224,
-        update_period=0.01 * 2,
+        update_period=0.05,
     )
 
     agentview_right_camera = TiledCameraCfg(
@@ -106,7 +106,7 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         ),
         width=224,
         height=224,
-        update_period=0.01 * 2,
+        update_period=0.05,
     )
 
     eye_in_hand_camera = TiledCameraCfg(
@@ -122,7 +122,7 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         ),
         width=224,
         height=224,
-        update_period=0.01 * 2,
+        update_period=0.05,
     )
 
     # # camera viz
@@ -158,10 +158,9 @@ class ActionsCfg:
     """Action specifications for the MDP."""
 
     # will be set by agent env cfg
-    arm_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg | mdp.DifferentialInverseKinematicsActionCfg = MISSING
-    gripper_action: mdp.BinaryJointPositionActionCfg = MISSING
     base_action: mdp.RelativeJointPositionActionCfg = MISSING
-
+    arm_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg | mdp.DifferentialInverseKinematicsActionCfg = MISSING
+    gripper_action: mdp.RelativeJointPositionActionCfg = MISSING #mdp.BinaryJointPositionActionCfg = MISSING
 
 @configclass
 class ObservationsCfg:
@@ -326,7 +325,7 @@ class LiftEnvCameraCfg(ManagerBasedRLEnvCfg):
         self.decimation = 2
         self.episode_length_s = 5.0
         # simulation settings
-        self.sim.dt = 0.01  # 100Hz
+        self.sim.dt = 0.05 # 20Hz 0.01  # 100Hz
         self.sim.render_interval = self.decimation
 
         self.sim.physx.bounce_threshold_velocity = 0.2
