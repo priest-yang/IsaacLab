@@ -154,21 +154,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
 
 
-    # env warm up
-    for _ in range(10):
-        zero_actions = torch.zeros(env.num_envs, env.num_actions)
-        obs, rewards, dones, infos = env.step(zero_actions.to(env.device))
-
-
-    policy_path = "/home/dana/isaacsim/isaacsim/isaaclab/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/lift_env_camera_cfg.py"
-    batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
-    
-    # load policy
-    from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
-    from lerobot.common.policies.factory import make_policy
-    from lerobot.configs.policies import PreTrainedConfig
-    policy: PreTrainedPolicy = load_pi0_policy(policy_path, batch)
-
 
     while True:
         # start = time.time()
@@ -177,11 +162,11 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             for i in range(num_steps_per_env):
                 # actions = runner.alg.act(obs, critic_obs)
                 # pesudo actions
-                actions = policy.select_action(batch)
+                actions = torch.zeros(env.num_envs, env.num_actions)
                 obs, rewards, dones, infos = env.step(actions.to(env.device))
 
-                # prepare batch for pi0
-                batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
+                # # prepare batch for pi0
+                # batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
 
                 if isinstance(obs, dict):
                     import cv2
