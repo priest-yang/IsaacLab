@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
 parser.add_argument("--video_interval", type=int, default=2000, help="Interval between video recordings (in steps).")
-parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to simulate.")
+parser.add_argument("--num_envs", type=int, default=8, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default="Isaac-Lift-Cube-FrankaOmron-Camera-v0", help="Name of the task.")
 # parser.add_argument("--task", type=str, default="Isaac-Cartpole-RGB-v0", help="Name of the task.")
 
@@ -152,18 +152,22 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # run training
     # runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
+    
+    
 
-
-
-    while True:
+    step = 0
+    while step < 100:
         # start = time.time()
         # Rollout
         with torch.inference_mode():
             for i in range(num_steps_per_env):
+                step += 1
                 # actions = runner.alg.act(obs, critic_obs)
                 # pesudo actions
                 actions = torch.zeros(env.num_envs, env.num_actions)
                 obs, rewards, dones, infos = env.step(actions.to(env.device))
+
+                # breakpoint()
 
                 # # prepare batch for pi0
                 # batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
@@ -172,79 +176,85 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                     import cv2
                     import numpy as np
                     
-                    # viz camera
-                    env_id = 0
-                    
-                    # Collect images and their keys
-                    images_with_keys = []
-                    for key, value in obs.items():
-                        if 'rgb' in key:
-                            img = value[env_id].cpu().numpy()
-                            # Convert from [C, H, W] to [H, W, C] if needed
-                            if img.shape[0] == 3:
-                                img = img.transpose(1, 2, 0)
-                            # Convert to uint8 range if in [0,1] float range
-                            if img.max() <= 1.0:
-                                img = (img * 255).astype(np.uint8)
-                            images_with_keys.append((key, img))
-                    
-                    if images_with_keys:
+                    # Process all environments instead of just env_id=0
+                    for env_id in range(env.num_envs):
+                        # Collect images and their keys
+                        images_with_keys = []
+                        for key, value in obs.items():
+                            if 'rgb' in key:
+                                img = value[env_id].cpu().numpy()
+                                # Convert from [C, H, W] to [H, W, C] if needed
+                                if img.shape[0] == 3:
+                                    img = img.transpose(1, 2, 0)
+                                # Convert to uint8 range if in [0,1] float range
+                                if img.max() <= 1.0:
+                                    img = (img * 255).astype(np.uint8)
+                                images_with_keys.append((key, img))
                         
-                        # Define display parameters
-                        font = cv2.FONT_HERSHEY_SIMPLEX
-                        font_scale = 0.8
-                        font_color = (255, 255, 255)  # White
-                        font_thickness = 2
-                        caption_height = 30  # Height for the caption area
-                        
-                        # Get sample image dimensions
-                        sample_img = images_with_keys[0][1]
-                        img_height, img_width = sample_img.shape[0], sample_img.shape[1]
-                        
-                        # Define a reasonable display width per image (scale if needed)
-                        target_width = min(img_width, 400)  # Max 400px width per image
-                        scale_factor = target_width / img_width
-                        display_height = int(img_height * scale_factor)
-                        display_width = target_width
-                        
-                        # Create a canvas for all images
-                        total_width = display_width * len(images_with_keys)
-                        canvas = np.zeros((display_height + caption_height, total_width, 3), dtype=np.uint8)
-                        
-                        # Place each image with its caption
-                        for idx, (key, img) in enumerate(images_with_keys):
-                            # Resize image
-                            resized_img = cv2.resize(img, (display_width, display_height))
+                        if images_with_keys:
+                            # Define display parameters
+                            font = cv2.FONT_HERSHEY_SIMPLEX
+                            font_scale = 0.8
+                            font_color = (255, 255, 255)  # White
+                            font_thickness = 2
+                            caption_height = 30  # Height for the caption area
                             
-                            # Calculate position
-                            x_offset = idx * display_width
+                            # Get sample image dimensions
+                            sample_img = images_with_keys[0][1]
+                            img_height, img_width = sample_img.shape[0], sample_img.shape[1]
                             
-                            # Place image on canvas
-                            canvas[0:display_height, x_offset:x_offset+display_width] = resized_img
+                            # Define a reasonable display width per image
+                            target_width = min(img_width, 400)  # Max 400px width per image
+                            scale_factor = target_width / img_width
+                            display_height = int(img_height * scale_factor)
+                            display_width = target_width
                             
-                            # Add caption
-                            text_size = cv2.getTextSize(key, font, font_scale, font_thickness)[0]
-                            text_x = x_offset + (display_width - text_size[0]) // 2  # Center text
-                            text_y = display_height + caption_height - 10  # Position at bottom of caption area
+                            # Create a canvas for all images
+                            total_width = display_width * len(images_with_keys)
+                            canvas = np.zeros((display_height + caption_height, total_width, 3), dtype=np.uint8)
                             
-                            # Add background for text (optional, for better readability)
-                            cv2.rectangle(canvas, 
-                                         (x_offset, display_height), 
-                                         (x_offset + display_width, display_height + caption_height), 
-                                         (0, 0, 0), 
-                                         -1)  # Filled rectangle
+                            # Place each image with its caption
+                            for idx, (key, img) in enumerate(images_with_keys):
+                                # Resize image
+                                resized_img = cv2.resize(img, (display_width, display_height))
+                                
+                                # Calculate position
+                                x_offset = idx * display_width
+                                
+                                # Place image on canvas
+                                canvas[0:display_height, x_offset:x_offset+display_width] = resized_img
+                                
+                                # Add caption
+                                text_size = cv2.getTextSize(key, font, font_scale, font_thickness)[0]
+                                text_x = x_offset + (display_width - text_size[0]) // 2  # Center text
+                                text_y = display_height + caption_height - 10  # Position at bottom of caption area
+                                
+                                # Add background for text
+                                cv2.rectangle(canvas, 
+                                             (x_offset, display_height), 
+                                             (x_offset + display_width, display_height + caption_height), 
+                                             (0, 0, 0), 
+                                             -1)  # Filled rectangle
+                                
+                                # Draw text
+                                cv2.putText(canvas, key, (text_x, text_y), font, font_scale, font_color, font_thickness)
                             
-                            # Draw text
-                            cv2.putText(canvas, key, (text_x, text_y), font, font_scale, font_color, font_thickness)
-                        
-                        # Display the canvas
-                        cv2.imshow('Camera Observations', canvas)
-                        
-                        # Wait for 1ms for window update and check if user pressed 'q' to quit
-                        key = cv2.waitKey(1)
-                        if key == ord('q'):
-                            print("Visualization stopped by user")
-                            break
+                            # Save the canvas to video
+                            # You need to initialize VideoWriter outside this loop
+                            if 'video_writers' not in locals():
+                                video_writers = {}
+                            
+                            # Create video writer for each environment if doesn't exist yet
+                            if env_id not in video_writers:
+                                os.makedirs(os.path.join(log_dir, "videos", "train"), exist_ok=True)
+                                video_path = os.path.join(log_dir, "videos", "train", f"env_{env_id}.mp4")
+                                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                                video_writers[env_id] = cv2.VideoWriter(
+                                    video_path, fourcc, 20.0, (total_width, display_height + caption_height)
+                                )
+                            
+                            # Write frame to video
+                            video_writers[env_id].write(canvas)
                 
 
 
@@ -267,6 +277,13 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             # start = stop
             # runner.alg.compute_returns(critic_obs)
 
+
+    # After the training loop, before env.close()
+    if 'video_writers' in locals():
+        for writer in video_writers.values():
+            writer.release()
+        
+        print("Video writers released")
 
     # close the simulator
     env.close()

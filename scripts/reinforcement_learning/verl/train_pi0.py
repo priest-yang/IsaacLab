@@ -155,23 +155,26 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
 
     # env warm up
+    # only when NO Gravity !!!!!
     for _ in range(10):
         zero_actions = torch.zeros(env.num_envs, env.num_actions)
         obs, rewards, dones, infos = env.step(zero_actions.to(env.device))
 
 
-    
     # load policy
-    from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
-    from lerobot.common.policies.factory import make_policy
-    from lerobot.configs.policies import PreTrainedConfig
+    # breakpoint()
+
     batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
-    policy_path = "/home/dana/isaacsim/isaacsim/isaaclab/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/lift_env_camera_cfg.py"
-    meta_path = "/home/dana/isaacsim/isaacsim/isaaclab/isaaclab_tasks/isaaclab_tasks/manager_based/manipulation/lift/lift_env_camera_cfg.py"
+    policy_path = "/data/ceph_hdd/main/dev/zim.gong/lerobot/outputs/train/2025-03-15/pi0_jax/checkpoints/pi0_base_pytorch"
+    meta_path = "/data/local/lerobot/robocasa/data-collection-3000/data-collection-3000_meta.pkl"
     policy = load_pi0_policy(policy_path, batch, meta_path)
 
     roll_out_nums = 100
     roll_out_iter = 0
+
+    # env.reset()
+
+    all_actions = []
 
     while roll_out_iter < roll_out_nums:
     # while True:
@@ -185,128 +188,99 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 # actions = runner.alg.act(obs, critic_obs)
                 # pesudo actions
                 actions = policy.select_action(batch)
+                all_actions.append(actions.clone().cpu().numpy()) # [1, num_actions]
+
+                # actions = torch.zeros(env.num_envs, env.num_actions)
                 obs, rewards, dones, infos = env.step(actions.to(env.device))
 
                 # prepare batch for pi0
                 batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
 
+
                 if isinstance(obs, dict):
                     import cv2
                     import numpy as np
-                    import os
-                    from datetime import datetime
                     
-                    # viz camera
-                    env_id = 0
-                    
-                    # Initialize video writer on first iteration
-                    if i == 0:
-                        # Create videos directory if it doesn't exist
-                        video_dir = os.path.join(log_dir, "videos", "observation_viz")
-                        os.makedirs(video_dir, exist_ok=True)
+                    # Process all environments instead of just env_id=0
+                    for env_id in range(env.num_envs):
+                        # Collect images and their keys
+                        images_with_keys = []
+                        for key, value in obs.items():
+                            if 'rgb' in key:
+                                img = value[env_id].cpu().numpy()
+                                # Convert from [C, H, W] to [H, W, C] if needed
+                                if img.shape[0] == 3:
+                                    img = img.transpose(1, 2, 0)
+                                # Convert to uint8 range if in [0,1] float range
+                                if img.max() <= 1.0:
+                                    img = (img * 255).astype(np.uint8)
+                                images_with_keys.append((key, img))
                         
-                        # Create timestamped filename
-                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        video_path = os.path.join(video_dir, f"camera_observations_{timestamp}.mp4")
-                        
-                        # Get FPS setting (adjust as needed)
-                        fps = 30
-                        
-                        # Video writer will be initialized after we create the first canvas
-                        video_writer = None
-                    
-                    # Collect images and their keys
-                    images_with_keys = []
-                    for key, value in obs.items():
-                        if 'rgb' in key:
-                            img = value[env_id].cpu().numpy()
-                            # Convert from [C, H, W] to [H, W, C] if needed
-                            if img.shape[0] == 3:
-                                img = img.transpose(1, 2, 0)
-                            # Convert to uint8 range if in [0,1] float range
-                            if img.max() <= 1.0:
-                                img = (img * 255).astype(np.uint8)
-                            images_with_keys.append((key, img))
-                    
-                    if images_with_keys:
-                        
-                        # Define display parameters
-                        font = cv2.FONT_HERSHEY_SIMPLEX
-                        font_scale = 0.8
-                        font_color = (255, 255, 255)  # White
-                        font_thickness = 2
-                        caption_height = 30  # Height for the caption area
-                        
-                        # Get sample image dimensions
-                        sample_img = images_with_keys[0][1]
-                        img_height, img_width = sample_img.shape[0], sample_img.shape[1]
-                        
-                        # Define a reasonable display width per image (scale if needed)
-                        target_width = min(img_width, 400)  # Max 400px width per image
-                        scale_factor = target_width / img_width
-                        display_height = int(img_height * scale_factor)
-                        display_width = target_width
-                        
-                        # Create a canvas for all images
-                        total_width = display_width * len(images_with_keys)
-                        canvas = np.zeros((display_height + caption_height, total_width, 3), dtype=np.uint8)
-                        
-                        # Place each image with its caption
-                        for idx, (key, img) in enumerate(images_with_keys):
-                            # Resize image
-                            resized_img = cv2.resize(img, (display_width, display_height))
+                        if images_with_keys:
+                            # Define display parameters
+                            font = cv2.FONT_HERSHEY_SIMPLEX
+                            font_scale = 0.8
+                            font_color = (255, 255, 255)  # White
+                            font_thickness = 2
+                            caption_height = 30  # Height for the caption area
                             
-                            # Calculate position
-                            x_offset = idx * display_width
+                            # Get sample image dimensions
+                            sample_img = images_with_keys[0][1]
+                            img_height, img_width = sample_img.shape[0], sample_img.shape[1]
                             
-                            # Place image on canvas
-                            canvas[0:display_height, x_offset:x_offset+display_width] = resized_img
+                            # Define a reasonable display width per image
+                            target_width = min(img_width, 400)  # Max 400px width per image
+                            scale_factor = target_width / img_width
+                            display_height = int(img_height * scale_factor)
+                            display_width = target_width
                             
-                            # Add caption
-                            text_size = cv2.getTextSize(key, font, font_scale, font_thickness)[0]
-                            text_x = x_offset + (display_width - text_size[0]) // 2  # Center text
-                            text_y = display_height + caption_height - 10  # Position at bottom of caption area
+                            # Create a canvas for all images
+                            total_width = display_width * len(images_with_keys)
+                            canvas = np.zeros((display_height + caption_height, total_width, 3), dtype=np.uint8)
                             
-                            # Add background for text (optional, for better readability)
-                            cv2.rectangle(canvas, 
-                                         (x_offset, display_height), 
-                                         (x_offset + display_width, display_height + caption_height), 
-                                         (0, 0, 0), 
-                                         -1)  # Filled rectangle
+                            # Place each image with its caption
+                            for idx, (key, img) in enumerate(images_with_keys):
+                                # Resize image
+                                resized_img = cv2.resize(img, (display_width, display_height))
+                                
+                                # Calculate position
+                                x_offset = idx * display_width
+                                
+                                # Place image on canvas
+                                canvas[0:display_height, x_offset:x_offset+display_width] = resized_img
+                                
+                                # Add caption
+                                text_size = cv2.getTextSize(key, font, font_scale, font_thickness)[0]
+                                text_x = x_offset + (display_width - text_size[0]) // 2  # Center text
+                                text_y = display_height + caption_height - 10  # Position at bottom of caption area
+                                
+                                # Add background for text
+                                cv2.rectangle(canvas, 
+                                             (x_offset, display_height), 
+                                             (x_offset + display_width, display_height + caption_height), 
+                                             (0, 0, 0), 
+                                             -1)  # Filled rectangle
+                                
+                                # Draw text
+                                cv2.putText(canvas, key, (text_x, text_y), font, font_scale, font_color, font_thickness)
                             
-                            # Draw text
-                            cv2.putText(canvas, key, (text_x, text_y), font, font_scale, font_color, font_thickness)
-                        
-                        # Initialize video writer on first frame
-                        if i == 0 and video_writer is None:
-                            # Use mp4v codec (MPEG-4)
-                            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-                            video_writer = cv2.VideoWriter(
-                                video_path, fourcc, fps, 
-                                (canvas.shape[1], canvas.shape[0])
-                            )
-                            print(f"Recording visualization to: {video_path}")
-                        
-                        # Write the current frame to video
-                        if video_writer is not None:
-                            video_writer.write(canvas)
-                        
-                        # # Display the canvas
-                        # cv2.imshow('Camera Observations', canvas)
-                        
-                        # # Wait for 1ms for window update and check if user pressed 'q' to quit
-                        # key = cv2.waitKey(1)
-                        # if key == ord('q'):
-                        #     print("Visualization stopped by user")
-                        #     # Release video writer
-                        #     if video_writer is not None:
-                        #         video_writer.release()
-                        #     break
-            
-    # Release video writer at the end of rollout
-    if 'video_writer' in locals() and video_writer is not None:
-        video_writer.release()
-        print(f"Saved visualization video to: {video_path}")
+                            # Save the canvas to video
+                            # You need to initialize VideoWriter outside this loop
+                            if 'video_writers' not in locals():
+                                video_writers = {}
+                            
+                            # Create video writer for each environment if doesn't exist yet
+                            if env_id not in video_writers:
+                                os.makedirs(os.path.join(log_dir, "videos", "train"), exist_ok=True)
+                                video_path = os.path.join(log_dir, "videos", "train", f"env_{env_id}.mp4")
+                                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                                video_writers[env_id] = cv2.VideoWriter(
+                                    video_path, fourcc, 20.0, (total_width, display_height + caption_height)
+                                )
+                            
+                            # Write frame to video
+                            video_writers[env_id].write(canvas)
+                
 
 
                 # # move to the right device
@@ -329,8 +303,43 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             # runner.alg.compute_returns(critic_obs)
 
 
+    # After the training loop, before env.close()
+    if 'video_writers' in locals():
+        for writer in video_writers.values():
+            writer.release()
+        
+        print("Video writers released")
+
     # close the simulator
     env.close()
+
+    # save actions
+    # After your training loop, convert the list to a numpy array and save to CSV
+    def save_actions_to_csv(all_actions, log_dir, env_id=0):
+        import pandas as pd
+        # This creates a 2D array: [num_timesteps, num_actions]
+        action_trajectory = np.vstack(all_actions)
+        
+        # Create column names for each joint
+        num_joints = action_trajectory.shape[1]
+        column_names = [f'joint_{i}' for i in range(num_joints)]
+        
+        # Convert to pandas DataFrame with labeled columns
+        df = pd.DataFrame(action_trajectory, columns=column_names)
+        
+        # Create directory if it doesn't exist
+        csv_dir = os.path.join(log_dir, "action_trajectories")
+        os.makedirs(csv_dir, exist_ok=True)
+        
+        # Save to CSV
+        csv_path = os.path.join(csv_dir, f"actions_env_{env_id}.csv")
+        df.to_csv(csv_path, index_label='timestep')
+        
+        print(f"Action trajectories saved to {csv_path}")
+
+    # Add this after your training loop, before env.close()
+    save_actions_to_csv(all_actions, log_dir)
+
 
 
 if __name__ == "__main__":

@@ -1,3 +1,8 @@
+from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.common.policies.factory import make_policy
+from lerobot.configs.policies import PreTrainedConfig
+import torch
+
 
 
 def load_pi0_policy(policy_path, batch, meta_path):
@@ -7,7 +12,7 @@ def load_pi0_policy(policy_path, batch, meta_path):
     cfg.pretrained_path = policy_path
 
     ds_meta = pickle.load(open(meta_path, "rb"))
-    policy = make_policy(cfg, ds_meta=meta_path)
+    policy = make_policy(cfg, ds_meta=ds_meta)
 
     # policy = torch.compile(policy, mode="reduce-overhead")
     warmup_iters = 10
@@ -19,6 +24,8 @@ def load_pi0_policy(policy_path, batch, meta_path):
         policy.select_action(batch)
         policy.reset()
         torch.cuda.synchronize()
+    
+    return policy
 
     
 
@@ -28,15 +35,25 @@ def prepare_inference_batch_pi0(obs, rewards, dones, infos):
     """
     
     batch = {}
-    
-    batch["observation.image.agentview_left"] = obs["agentview_left_rgb"]
-    batch["observation.image.agentview_right"] = obs["agentview_right_rgb"]
-    batch["observation.image.eye_in_hand"] = obs["eye_in_hand_rgb"]
-    batch['observation.state'] = torch.cat([obs['joint_pos'], obs['joint_vel'], obs['object_position_in_robot_frame'], obs['target_object_position_in_robot_frame']], dim=1)
-    
-    batch['task'] = "Lift the cube"
 
-    batch["rewards"] = rewards
-    batch["dones"] = dones
-    batch["infos"] = infos
+    
+    batch["observation.images.agentview_left"] = obs["agentview_left_rgb"].permute(0, 3, 1, 2)
+    batch["observation.images.agentview_right"] = obs["agentview_right_rgb"].permute(0, 3, 1, 2)
+    batch["observation.images.eye_in_hand"] = obs["eye_in_hand_rgb"].permute(0, 3, 1, 2)
+
+    # !handle gripper mismatch between robocasa and pi0
+    joint_pos = obs['joint_pos']
+    joint_pos[:, -1] = joint_pos[:, -1] * -1
+    joint_vel = obs['joint_vel']
+    joint_vel[:, -1] = joint_vel[:, -1] * -1
+
+    batch['observation.state'] = torch.cat([joint_pos, joint_vel], dim=1)
+
+
+    # batch["rewards"] = rewards
+    # batch["dones"] = dones
+    # batch["infos"] = infos
+    batch["task"] = ["Lift the cube"]
+
+    return batch
 
