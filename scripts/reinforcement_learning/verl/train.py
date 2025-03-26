@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
 parser.add_argument("--video_interval", type=int, default=2000, help="Interval between video recordings (in steps).")
-parser.add_argument("--num_envs", type=int, default=8, help="Number of environments to simulate.")
+parser.add_argument("--num_envs", type=int, default=2, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default="Isaac-Lift-Cube-FrankaOmron-Camera-v0", help="Name of the task.")
 # parser.add_argument("--task", type=str, default="Isaac-Cartpole-RGB-v0", help="Name of the task.")
 
@@ -153,10 +153,21 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # run training
     # runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
     
+    import pandas as pd
+    all_actions = pd.read_csv('/home/johndoe/Documents/IsaacLab/scripts/reinforcement_learning/verl/actions.csv')
+
     
+    for step in range(50):
+        # step to initial state
+        actions = all_actions.iloc[0, :].to_numpy()
+        actions = torch.from_numpy(actions)
+        actions = actions.expand(env.num_envs, -1)
+        obs, rewards, dones, infos = env.step(actions.to(env.device))
+
+    all_states = []
 
     step = 0
-    while step < 100:
+    while step < 230:
         # start = time.time()
         # Rollout
         with torch.inference_mode():
@@ -165,7 +176,15 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 # actions = runner.alg.act(obs, critic_obs)
                 # pesudo actions
                 actions = torch.zeros(env.num_envs, env.num_actions)
+
+                actions = all_actions.iloc[step, :].to_numpy()
+                actions = torch.from_numpy(actions)
+                actions = actions.expand(env.num_envs, -1)
                 obs, rewards, dones, infos = env.step(actions.to(env.device))
+
+                joint_pos = obs['joint_pos'][0, :]
+                all_states.append(joint_pos.cpu().numpy())
+
 
                 # breakpoint()
 
@@ -250,7 +269,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                                 video_path = os.path.join(log_dir, "videos", "train", f"env_{env_id}.mp4")
                                 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
                                 video_writers[env_id] = cv2.VideoWriter(
-                                    video_path, fourcc, 20.0, (total_width, display_height + caption_height)
+                                    video_path, fourcc, 10.0, (total_width, display_height + caption_height)
                                 )
                             
                             # Write frame to video
@@ -287,6 +306,14 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # close the simulator
     env.close()
+
+    # save all states to csv
+    all_states = np.array(all_states)
+    pd.DataFrame(all_states).to_csv(os.path.join(log_dir, "states.csv"), index=False)
+    all_actions.to_csv(os.path.join(log_dir, "actions.csv"), index=False)
+
+    from utils import plot_action_trajectories
+    plot_action_trajectories(os.path.join(log_dir, "actions.csv"), os.path.join(log_dir, "states.csv"))
 
 
 if __name__ == "__main__":

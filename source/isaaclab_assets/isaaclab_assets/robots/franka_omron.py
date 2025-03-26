@@ -49,8 +49,8 @@ FRANKA_OMRON_CFG = ArticulationCfg(
             "panda_finger_joint.*": 0.04,
 
             # base
-            "mobilebase_forward": 0.0,
             "mobilebase_side": 0.0,
+            "mobilebase_forward": 0.0,
             "mobilebase_yaw": 0.0,
             "mobilebase_torso_height": 0.0,
         },
@@ -79,24 +79,24 @@ FRANKA_OMRON_CFG = ArticulationCfg(
         ),
         "mobile_base_movement": ImplicitActuatorCfg(
             joint_names_expr=["mobilebase_forward", "mobilebase_side", ],
-            effort_limit=100000,
-            velocity_limit=0.1,
-            stiffness=1e6,
-            damping=1e1,
+            effort_limit=1000000000,
+            velocity_limit=0.5,
+            stiffness=5e2,
+            damping=40,
         ),
         "mobile_base_rotate": ImplicitActuatorCfg(
             joint_names_expr=["mobilebase_yaw"],
-            effort_limit=100000,
+            effort_limit=1000000000,
             velocity_limit=0.5,
-            stiffness=1e6,
-            damping=1e1,
+            stiffness=5e2,
+            damping=10,
         ),
         "mobile_base_torso": ImplicitActuatorCfg(
             joint_names_expr=["mobilebase_torso_height"],
             effort_limit=100000000,
-            velocity_limit=0.1,
-            stiffness=1e6,
-            damping=1e1,
+            velocity_limit=0.5,
+            stiffness=5e2,
+            damping=10,
         ),
 
     },
@@ -107,17 +107,17 @@ FRANKA_OMRON_CFG = ArticulationCfg(
 
 FRANKA_OMRON_HIGH_PD_CFG = FRANKA_OMRON_CFG.copy()
 FRANKA_OMRON_HIGH_PD_CFG.spawn.rigid_props.disable_gravity = True
-FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_shoulder"].stiffness = 400.0
-FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_shoulder"].damping = 80.0
-FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_forearm"].stiffness = 400.0
-FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_forearm"].damping = 80.0
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_shoulder"].stiffness = 400.0
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_shoulder"].damping = 80.0
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_forearm"].stiffness = 400.0
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["panda_forearm"].damping = 80.0
 
-FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_movement"].stiffness = 1e6
-FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_movement"].damping = 1e4
-FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_torso"].stiffness = 1e6
-FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_torso"].damping = 1e4
-FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_rotate"].stiffness = 1e6
-FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_rotate"].damping = 1e4
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_movement"].stiffness = 1e6
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_movement"].damping = 1e4
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_torso"].stiffness = 1e6
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_torso"].damping = 1e4
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_rotate"].stiffness = 1e6
+# FRANKA_OMRON_HIGH_PD_CFG.actuators["mobile_base_rotate"].damping = 1e4
 
 """Configuration of Franka Emika Panda robot with stiffer PD control.
 
