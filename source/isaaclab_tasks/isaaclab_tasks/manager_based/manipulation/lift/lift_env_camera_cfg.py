@@ -158,9 +158,9 @@ class ActionsCfg:
     """Action specifications for the MDP."""
 
     # will be set by agent env cfg
-    base_action: mdp.RelativeJointPositionActionCfg = MISSING
+    base_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg= MISSING
     arm_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg | mdp.DifferentialInverseKinematicsActionCfg = MISSING
-    gripper_action: mdp.RelativeJointPositionActionCfg = MISSING #mdp.BinaryJointPositionActionCfg = MISSING
+    gripper_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg= MISSING #mdp.BinaryJointPositionActionCfg = MISSING
 
 @configclass
 class ObservationsCfg:
@@ -326,8 +326,8 @@ class LiftEnvCameraCfg(ManagerBasedRLEnvCfg):
     def __post_init__(self):
         """Post initialization."""
         # general settings
-        self.decimation = 5 # control at 20Hz
-        self.episode_length_s = 5.0
+        self.decimation = 10 # control at 10Hz
+        self.episode_length_s = 35.0
         # simulation settings
         self.sim.dt = 0.01 # 0.01  # 100Hz
         self.sim.render_interval = self.decimation

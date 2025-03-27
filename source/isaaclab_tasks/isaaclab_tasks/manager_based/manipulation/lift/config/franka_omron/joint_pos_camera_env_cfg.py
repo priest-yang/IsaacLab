@@ -34,32 +34,58 @@ class FrankaOmronCubeLiftCameraEnvCfg(LiftEnvCameraCfg):
         # Set actions for the specific robot type (franka)
 
 
-        self.actions.base_action = mdp.RelativeJointPositionActionCfg(
-            asset_name="robot",
-            joint_names=["mobilebase_.*"],
-            # scale=0.01, #01,
-            use_zero_offset=True, # use default offset is not working for base action
-        )
-
-        self.actions.arm_action = mdp.RelativeJointPositionActionCfg(
-            asset_name="robot", 
-            joint_names=["panda_joint[1-7]"], 
-            use_zero_offset=True,
-            # scale=0.5,
-        )
-
-        # self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
+        # self.actions.base_action = mdp.RelativeJointPositionActionCfg(
         #     asset_name="robot",
-        #     joint_names=["panda_finger.*"],
-        #     open_command_expr={"panda_finger_.*": 0.04},
-        #     close_command_expr={"panda_finger_.*": 0.0},
+        #     joint_names=["mobilebase_.*"],
+        #     # scale=0.01, #01,
+        #     use_zero_offset=True, # use default offset is not working for base action
         # )
 
-        self.actions.gripper_action = mdp.RelativeJointPositionActionCfg(
+        # self.actions.arm_action = mdp.RelativeJointPositionActionCfg(
+        #     asset_name="robot", 
+        #     joint_names=["panda_joint[1-7]"], 
+        #     use_zero_offset=True,
+        #     # scale=0.5,
+        # )
+
+        # # self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
+        # #     asset_name="robot",
+        # #     joint_names=["panda_finger.*"],
+        # #     open_command_expr={"panda_finger_.*": 0.04},
+        # #     close_command_expr={"panda_finger_.*": 0.0},
+        # # )
+
+        # self.actions.gripper_action = mdp.RelativeJointPositionActionCfg(
+        #     asset_name="robot",
+        #     joint_names=["panda_finger.*"],
+        #     use_zero_offset=True,
+        # )
+
+
+        # replaced to abs action
+        self.actions.base_action = mdp.JointPositionActionCfg(
+            asset_name="robot",
+            joint_names=["mobilebase_side", "mobilebase_forward", "mobilebase_yaw", "mobilebase_torso_height"],
+            use_default_offset=False,
+            preserve_order=True,
+
+        )
+
+        self.actions.arm_action = mdp.JointPositionActionCfg(
+            asset_name="robot",
+            joint_names=["panda_joint[1-7]"],
+            use_default_offset=False,
+            preserve_order=True,
+        )
+
+        self.actions.gripper_action = mdp.JointPositionActionCfg(
             asset_name="robot",
             joint_names=["panda_finger.*"],
-            use_zero_offset=True,
+            use_default_offset=False,
+            preserve_order=True,
         )
+        
+        
 
 
         # Set the body name for the end effector
