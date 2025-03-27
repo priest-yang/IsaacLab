@@ -183,6 +183,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 obs, rewards, dones, infos = env.step(actions.to(env.device))
 
                 joint_pos = obs['joint_pos'][0, :]
+                joint_pos[0], joint_pos[1] = joint_pos[1].clone(), joint_pos[0].clone()
                 all_states.append(joint_pos.cpu().numpy())
 
 
