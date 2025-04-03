@@ -46,24 +46,24 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
 
     # Table
     table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[1, 0, 0.8], rot=[0.707, 0, 0, 0.707]),
+        prim_path="{ENV_REGEX_NS}/Kitchen",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[-1.5, 0, -0.05], rot=[0.707, 0, 0, -0.707]),
         # init_state=AssetBaseCfg.InitialStateCfg(pos=[1, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
+        spawn=UsdFileCfg(usd_path=f"/home/johndoe/Desktop/KitchenRoom_small.usd"),
     )
 
     # plane
     plane = AssetBaseCfg(
         prim_path="/World/GroundPlane",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, 0]), #-1.05]),
-        spawn=GroundPlaneCfg(),
+        spawn=GroundPlaneCfg(color=(100, 100, 100)),
     )
 
-    # lights
-    light = AssetBaseCfg(
-        prim_path="/World/light",
-        spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=3000.0),
-    )
+    # # lights
+    # light = AssetBaseCfg(
+    #     prim_path="/World/light",
+    #     spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=3000.0),
+    # )
 
 
     # camera
@@ -147,9 +147,13 @@ class CommandsCfg:
         body_name=MISSING,  # will be set by agent env cfg
         resampling_time_range=(5.0, 5.0),
         # debug_vis=True,
+        # ranges=mdp.UniformPoseCommandCfg.Ranges(
+        #     pos_x=(1-0.8, 1-0.6), pos_y=(-0.25, 0.25), pos_z=(0.65+0.3, 0.85+0.3), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+        # ),
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(1-0.8, 1-0.6), pos_y=(-0.25, 0.25), pos_z=(0.65+0.3, 0.85+0.3), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(0.55, 0.7), pos_y=(-0.15, 0.15), pos_z=(0.9, 1.05), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
+
     )
 
 
@@ -275,9 +279,9 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
-    object_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": 0.8210-0.1, "asset_cfg": SceneEntityCfg("object")}
-    )
+    # object_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": 0.8210-0.1, "asset_cfg": SceneEntityCfg("object")}
+    # )
 
     # far_from_object = DoneTerm(
     #     func=mdp.root_far_from_object,
@@ -312,7 +316,7 @@ class LiftEnvCameraCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: ObjectTableSceneCfg = ObjectTableSceneCfg(num_envs=4096, env_spacing=3)
+    scene: ObjectTableSceneCfg = ObjectTableSceneCfg(num_envs=4096, env_spacing=6)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
