@@ -42,13 +42,18 @@ def prepare_inference_batch_pi0(obs, rewards, dones, infos):
     batch["observation.images.eye_in_hand"] = obs["eye_in_hand_rgb"].permute(0, 3, 1, 2)
 
     # !handle gripper mismatch between robocasa and pi0
+
     joint_pos = obs['joint_pos']
     joint_pos[:, -1] = joint_pos[:, -1] * -1
-    joint_vel = obs['joint_vel']
-    joint_vel[:, -1] = joint_vel[:, -1] * -1
+    # joint_vel = obs['joint_vel']
+    # joint_vel[:, -1] = joint_vel[:, -1] * -1
 
-    batch['observation.state'] = torch.cat([joint_pos, joint_vel], dim=1)
+    joint_pos[:, 0], joint_pos[:, 1] = joint_pos[:, 1].clone(), joint_pos[:, 0].clone()
+    # joint_vel[:, 0], joint_vel[:, 1] = joint_vel[:, 1].clone(), joint_vel[:, 0].clone()
 
+   
+    # batch['observation.state'] = torch.cat([joint_pos, joint_vel], dim=1)
+    batch['observation.state'] = joint_pos
 
     # batch["rewards"] = rewards
     # batch["dones"] = dones
