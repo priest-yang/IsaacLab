@@ -37,9 +37,13 @@ def prepare_inference_batch_pi0(obs, rewards, dones, infos):
     batch = {}
 
     
-    batch["observation.images.agentview_left"] = obs["agentview_left_rgb"].permute(0, 3, 1, 2)
-    batch["observation.images.agentview_right"] = obs["agentview_right_rgb"].permute(0, 3, 1, 2)
-    batch["observation.images.eye_in_hand"] = obs["eye_in_hand_rgb"].permute(0, 3, 1, 2)
+    batch["observation.images.agentview_left"] = obs["agentview_left_rgb"].permute(0, 3, 1, 2) / 255.0
+    batch["observation.images.agentview_right"] = obs["agentview_right_rgb"].permute(0, 3, 1, 2) / 255.0
+    batch["observation.images.eye_in_hand"] = obs["eye_in_hand_rgb"].permute(0, 3, 1, 2) / 255.0
+
+    # images = images.float() / 255.0
+    # mean_tensor = torch.mean(images, dim=(1, 2), keepdim=True)
+    # images -= mean_tensor
 
     # !handle gripper mismatch between robocasa and pi0
 

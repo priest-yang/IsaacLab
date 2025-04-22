@@ -14,7 +14,7 @@ from isaaclab.app import AppLauncher
 
 # local imports
 import cli_args  # isort: skip
-from utils import prepare_inference_batch_pi0, load_pi0_policy
+# from utils import prepare_inference_batch_pi0, load_pi0_policy
 
 
 # add argparse arguments
@@ -154,19 +154,21 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
     
     import pandas as pd
-    all_actions = pd.read_csv('/home/johndoe/Documents/IsaacLab/scripts/reinforcement_learning/verl/actions.csv')
+    # all_actions = pd.read_csv('/home/shaoze.yang/IsaacLab/logs/rsl_rl/franka_lift/2025-04-14_13-17-44/action_trajectories/actions_env_0.csv')
 
     
-    for step in range(50):
+    for step in range(1):
         # step to initial state
-        actions = all_actions.iloc[0, :].to_numpy()
-        actions = torch.from_numpy(actions)
-        actions = actions.expand(env.num_envs, -1)
+        # actions = all_actions.iloc[1, :].to_numpy()
+        actions = torch.zeros(env.num_envs, env.num_actions)
+        # actions = torch.from_numpy(actions)
+        # actions = actions.expand(env.num_envs, -1)
         obs, rewards, dones, infos = env.step(actions.to(env.device))
 
     all_states = []
 
-    step = 0
+    step = 1
+    env.reset()
     while step < 230:
         # start = time.time()
         # Rollout
@@ -177,9 +179,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 # pesudo actions
                 actions = torch.zeros(env.num_envs, env.num_actions)
 
-                actions = all_actions.iloc[step, :].to_numpy()
-                actions = torch.from_numpy(actions)
-                actions = actions.expand(env.num_envs, -1)
+                # actions = all_actions.iloc[step, :].to_numpy()
+                # actions = torch.from_numpy(actions)
+                # actions = actions.expand(env.num_envs, -1)
                 obs, rewards, dones, infos = env.step(actions.to(env.device))
 
                 joint_pos = obs['joint_pos'][0, :]
@@ -311,10 +313,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # save all states to csv
     all_states = np.array(all_states)
     pd.DataFrame(all_states).to_csv(os.path.join(log_dir, "states.csv"), index=False)
-    all_actions.to_csv(os.path.join(log_dir, "actions.csv"), index=False)
+    # all_actions.to_csv(os.path.join(log_dir, "actions.csv"), index=False)
 
     from utils import plot_action_trajectories
-    plot_action_trajectories(os.path.join(log_dir, "actions.csv"), os.path.join(log_dir, "states.csv"))
+    # plot_action_trajectories(os.path.join(log_dir, "actions.csv"), os.path.join(log_dir, "states.csv"), os.path.join(log_dir))
 
 
 if __name__ == "__main__":

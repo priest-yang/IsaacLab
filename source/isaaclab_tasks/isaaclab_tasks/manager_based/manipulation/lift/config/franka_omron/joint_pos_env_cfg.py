@@ -34,7 +34,7 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
         # Set actions for the specific robot type (franka)
 
         self.actions.arm_action = mdp.RelativeJointPositionActionCfg(
-            asset_name="robot", joint_names=["panda_joint[1-7]"], scale=0.5, use_zero_offset=False
+            asset_name="robot", joint_names=["panda_joint[1-7]"], use_zero_offset=False
         )
 
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
@@ -49,6 +49,8 @@ class FrankaOmronCubeLiftEnvCfg(LiftEnvCfg):
             scale=0.01, #01,
             use_zero_offset=True, # use default offset is not working for base action
         )
+
+
         # Set the body name for the end effector
         self.commands.object_pose.body_name = "panda_hand"
 

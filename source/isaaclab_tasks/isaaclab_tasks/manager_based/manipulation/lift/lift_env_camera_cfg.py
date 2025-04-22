@@ -49,7 +49,7 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Kitchen",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[-1.5, 0, -0.05], rot=[0.707, 0, 0, -0.707]),
         # init_state=AssetBaseCfg.InitialStateCfg(pos=[1, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"/home/johndoe/Desktop/KitchenRoom_small.usd"),
+        spawn=UsdFileCfg(usd_path=f"/home/shaoze.yang/IsaacLab/source/isaaclab_assets/data/KitchenRoom_small.usd"),
     )
 
     # plane
@@ -151,7 +151,7 @@ class CommandsCfg:
         #     pos_x=(1-0.8, 1-0.6), pos_y=(-0.25, 0.25), pos_z=(0.65+0.3, 0.85+0.3), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         # ),
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.55, 0.7), pos_y=(-0.15, 0.15), pos_z=(0.9, 1.05), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(1.1, 1.3), pos_y=(-0.15, 0.15), pos_z=(0.9, 1.05), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
 
     )
@@ -162,9 +162,11 @@ class ActionsCfg:
     """Action specifications for the MDP."""
 
     # will be set by agent env cfg
-    base_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg= MISSING
+    
     arm_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg | mdp.DifferentialInverseKinematicsActionCfg = MISSING
-    gripper_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg= MISSING #mdp.BinaryJointPositionActionCfg = MISSING
+    gripper_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg | mdp.BinaryJointPositionActionCfg = MISSING
+    base_action: mdp.RelativeJointPositionActionCfg | mdp.JointPositionActionCfg= MISSING
+
 
 @configclass
 class ObservationsCfg:
@@ -203,9 +205,9 @@ class ObservationsCfg:
 
 
         # add camera observations
-        agentview_left_rgb = ObsTerm(func=mdp.raw_image, params={"sensor_cfg": SceneEntityCfg("agentview_left_camera"), "data_type": "rgb"})
-        agentview_right_rgb = ObsTerm(func=mdp.raw_image, params={"sensor_cfg": SceneEntityCfg("agentview_right_camera"), "data_type": "rgb"})
-        eye_in_hand_rgb = ObsTerm(func=mdp.raw_image, params={"sensor_cfg": SceneEntityCfg("eye_in_hand_camera"), "data_type": "rgb"})
+        agentview_left_rgb = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("agentview_left_camera"), "data_type": "rgb", "normalize": False})
+        agentview_right_rgb = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("agentview_right_camera"), "data_type": "rgb", "normalize": False})
+        eye_in_hand_rgb = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("eye_in_hand_camera"), "data_type": "rgb", "normalize": False})
 
 
         def __post_init__(self):
@@ -226,7 +228,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.8, -0.5), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-1, -0.9), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
         },
@@ -331,7 +333,7 @@ class LiftEnvCameraCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 10 # control at 10Hz
-        self.episode_length_s = 35.0
+        self.episode_length_s = 100.0
         # simulation settings
         self.sim.dt = 0.01 # 0.01  # 100Hz
         self.sim.render_interval = self.decimation

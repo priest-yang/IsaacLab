@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
 parser.add_argument("--video_interval", type=int, default=2000, help="Interval between video recordings (in steps).")
-parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to simulate.")
+parser.add_argument("--num_envs", type=int, default=2, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default="Isaac-Lift-Cube-FrankaOmron-Camera-v0", help="Name of the task.")
 # parser.add_argument("--task", type=str, default="Isaac-Cartpole-RGB-v0", help="Name of the task.")
 
@@ -156,7 +156,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # env warm up
     # only when NO Gravity !!!!!
-    for _ in range(10):
+    for _ in range(1):
         zero_actions = torch.zeros(env.num_envs, env.num_actions)
         obs, rewards, dones, infos = env.step(zero_actions.to(env.device))
 
@@ -165,14 +165,14 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # breakpoint()
 
     batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
-    policy_path = "/data/ceph_hdd/main/dev/zim.gong/lerobot/outputs/train/2025-03-15/pi0_jax/checkpoints/pi0_base_pytorch"
-    meta_path = "/data/local/lerobot/robocasa/data-collection-3000/data-collection-3000_meta.pkl"
+    policy_path = "/data/ceph_hdd/main/dev/zim.gong/openpi/checkpoints/pi0_robocasa_v0.1_overfit/pi0_pytorch_25000"
+    meta_path = "/data/ceph_hdd/main/datasets/lerobot/robocasa/PnPStoveToCounter/meta/meta.pkl"
     policy = load_pi0_policy(policy_path, batch, meta_path)
 
-    roll_out_nums = 100
+    roll_out_nums = 300
     roll_out_iter = 0
 
-    # env.reset()
+    env.reset()
 
     all_actions = []
 
@@ -188,6 +188,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 # actions = runner.alg.act(obs, critic_obs)
                 # pesudo actions
                 actions = policy.select_action(batch)
+                actions[:, -1] = actions[:, -1] * -1
+                
                 all_actions.append(actions.clone().cpu().numpy()) # [1, num_actions]
 
                 # actions = torch.zeros(env.num_envs, env.num_actions)

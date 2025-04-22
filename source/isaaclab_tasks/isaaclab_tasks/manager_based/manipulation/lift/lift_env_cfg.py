@@ -102,8 +102,12 @@ class ObservationsCfg:
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
 
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        joint_pos = ObsTerm(func=mdp.joint_pos)
+        joint_vel = ObsTerm(func=mdp.joint_vel)
+
+        joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
+        joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
+        
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame) 
          
         # modified to floating basis
@@ -124,6 +128,16 @@ class ObservationsCfg:
                 "key": "mobilebase0_wheeled_base"   
             }
         )
+
+        target_object_position_in_robot_ee_frame = ObsTerm(
+            func=mdp.target_object_position_in_robot_root_frame, params={
+                "robot_cfg": SceneEntityCfg("robot"),
+                "command_name": "object_pose",
+                "key": "panda_hand"   
+            }
+        )
+
+
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):

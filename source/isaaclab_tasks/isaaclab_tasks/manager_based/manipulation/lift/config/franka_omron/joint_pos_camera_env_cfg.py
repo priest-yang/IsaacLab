@@ -63,13 +63,6 @@ class FrankaOmronCubeLiftCameraEnvCfg(LiftEnvCameraCfg):
 
 
         # replaced to abs action
-        self.actions.base_action = mdp.JointPositionActionCfg(
-            asset_name="robot",
-            joint_names=["mobilebase_side", "mobilebase_forward", "mobilebase_yaw", "mobilebase_torso_height"],
-            use_default_offset=False,
-            preserve_order=True,
-
-        )
 
         self.actions.arm_action = mdp.JointPositionActionCfg(
             asset_name="robot",
@@ -78,9 +71,23 @@ class FrankaOmronCubeLiftCameraEnvCfg(LiftEnvCameraCfg):
             preserve_order=True,
         )
 
-        self.actions.gripper_action = mdp.JointPositionActionCfg(
+        # self.actions.gripper_action = mdp.JointPositionActionCfg(
+        #     asset_name="robot",
+        #     joint_names=["panda_finger.*"],
+        #     use_default_offset=False,
+        #     preserve_order=True,
+        # )
+
+        self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["panda_finger.*"],
+            open_command_expr={"panda_finger_.*": 0.04},
+            close_command_expr={"panda_finger_.*": 0.0},
+        )
+
+        self.actions.base_action = mdp.JointPositionActionCfg(
+            asset_name="robot",
+            joint_names=["mobilebase_side", "mobilebase_forward", "mobilebase_yaw", "mobilebase_torso_height"],
             use_default_offset=False,
             preserve_order=True,
         )
