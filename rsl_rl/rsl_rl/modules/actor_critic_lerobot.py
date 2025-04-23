@@ -24,7 +24,7 @@ from lerobot.common.datasets.factory import make_dataset
 
 import pickle
 
-class ActorCritic(nn.Module):
+class ActorCriticLerobot(nn.Module):
     is_recurrent = False
 
     def __init__(

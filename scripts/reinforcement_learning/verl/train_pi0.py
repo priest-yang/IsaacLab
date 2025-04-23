@@ -165,7 +165,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # breakpoint()
 
     batch = prepare_inference_batch_pi0(obs, rewards, dones, infos)
-    policy_path = "/data/ceph_hdd/main/dev/zim.gong/openpi/checkpoints/pi0_robocasa_v0.1_overfit/pi0_pytorch_25000"
+    policy_path = "/home/shaoze.yang/models/pi0_pytorch_25000"
     meta_path = "/data/ceph_hdd/main/datasets/lerobot/robocasa/PnPStoveToCounter/meta/meta.pkl"
     policy = load_pi0_policy(policy_path, batch, meta_path)
 

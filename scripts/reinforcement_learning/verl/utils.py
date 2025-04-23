@@ -2,7 +2,7 @@ from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 from lerobot.common.policies.factory import make_policy
 from lerobot.configs.policies import PreTrainedConfig
 import torch
-
+import time
 
 
 def load_pi0_policy(policy_path, batch, meta_path):
@@ -12,7 +12,11 @@ def load_pi0_policy(policy_path, batch, meta_path):
     cfg.pretrained_path = policy_path
 
     ds_meta = pickle.load(open(meta_path, "rb"))
+
+    start = time.time()
     policy = make_policy(cfg, ds_meta=ds_meta)
+    end = time.time()
+    print(f"Time taken to create policy: {end - start} seconds")
 
     # policy = torch.compile(policy, mode="reduce-overhead")
     warmup_iters = 10
@@ -48,11 +52,11 @@ def prepare_inference_batch_pi0(obs, rewards, dones, infos):
     # !handle gripper mismatch between robocasa and pi0
 
     joint_pos = obs['joint_pos']
-    joint_pos[:, -1] = joint_pos[:, -1] * -1
+    joint_pos[..., -1] = joint_pos[..., -1] * -1
     # joint_vel = obs['joint_vel']
     # joint_vel[:, -1] = joint_vel[:, -1] * -1
 
-    joint_pos[:, 0], joint_pos[:, 1] = joint_pos[:, 1].clone(), joint_pos[:, 0].clone()
+    joint_pos[..., 0], joint_pos[..., 1] = joint_pos[..., 1].clone(), joint_pos[..., 0].clone()
     # joint_vel[:, 0], joint_vel[:, 1] = joint_vel[:, 1].clone(), joint_vel[:, 0].clone()
 
    
@@ -62,7 +66,8 @@ def prepare_inference_batch_pi0(obs, rewards, dones, infos):
     # batch["rewards"] = rewards
     # batch["dones"] = dones
     # batch["infos"] = infos
-    batch["task"] = ["Lift the cube"]
+    batch["task"] = ["Pick up the cube"] * obs['joint_pos'].shape[0]
+
 
     return batch
 
