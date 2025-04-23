@@ -10,7 +10,7 @@ import torch
 from rsl_rl.utils import split_and_pad_trajectories
 
 
-class RolloutStorage:
+class RolloutStorageLerobot:
     class Transition:
         def __init__(self):
             self.observations = None
@@ -32,8 +32,8 @@ class RolloutStorage:
         self,
         num_envs,
         num_transitions_per_env,
-        obs_shape,
-        privileged_obs_shape,
+        sample_obs,
+        privileged_sample_obs,
         actions_shape,
         rnd_state_shape=None,
         device="cpu",
@@ -42,20 +42,27 @@ class RolloutStorage:
         self.device = device
         self.num_transitions_per_env = num_transitions_per_env
         self.num_envs = num_envs
-        self.obs_shape = obs_shape
-        self.privileged_obs_shape = privileged_obs_shape
+        self.sample_obs = sample_obs
+        self.privileged_sample_obs = privileged_sample_obs
         self.rnd_state_shape = rnd_state_shape
         self.actions_shape = actions_shape
 
         # Core
-        self.observations = torch.zeros(num_transitions_per_env, num_envs, *obs_shape, device=self.device)
-        if privileged_obs_shape is not None:
-            self.privileged_observations = torch.zeros(
-                num_transitions_per_env, num_envs, *privileged_obs_shape, device=self.device
-            )
+
+        # change this to a dictionary
+        self.observations = {
+            key: torch.zeros(num_transitions_per_env, num_envs, *shape, device=self.device)
+            for key, shape in sample_obs.items()
+        }
+
+        if privileged_sample_obs is not None:
+            self.privileged_observations = {
+                key: torch.zeros(num_transitions_per_env, num_envs, *shape, device=self.device)
+                for key, shape in privileged_sample_obs.items()
+            }
         else:
             self.privileged_observations = None
-            
+
         self.rewards = torch.zeros(num_transitions_per_env, num_envs, 1, device=self.device)
         self.actions = torch.zeros(num_transitions_per_env, num_envs, *actions_shape, device=self.device)
         self.dones = torch.zeros(num_transitions_per_env, num_envs, 1, device=self.device).byte()
@@ -84,9 +91,12 @@ class RolloutStorage:
             raise OverflowError("Rollout buffer overflow! You should call clear() before adding new transitions.")
 
         # Core
-        self.observations[self.step].copy_(transition.observations)
+        for key in self.observations.keys():
+            self.observations[key][self.step].copy_(transition.observations[key])
         if self.privileged_observations is not None:
-            self.privileged_observations[self.step].copy_(transition.critic_observations)
+            for key in self.privileged_observations.keys():
+                self.privileged_observations[key][self.step].copy_(transition.critic_observations[key])
+        
         self.actions[self.step].copy_(transition.actions)
         self.rewards[self.step].copy_(transition.rewards.view(-1, 1))
         self.dones[self.step].copy_(transition.dones.view(-1, 1))

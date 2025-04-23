@@ -22,6 +22,8 @@ from lerobot.common.policies.pretrained import PreTrainedPolicy
 from lerobot.common.policies.utils import get_device_from_parameters
 from lerobot.common.datasets.factory import make_dataset
 
+
+
 import pickle
 
 class ActorCriticLerobot(nn.Module):
@@ -29,7 +31,6 @@ class ActorCriticLerobot(nn.Module):
 
     def __init__(
         self,
-        num_actor_obs,
         num_critic_obs,
         num_actions,
         critic_hidden_dims=[256, 256, 256],
@@ -54,7 +55,11 @@ class ActorCriticLerobot(nn.Module):
         self.config = config
 
         # Policy
-        dataset_meta = pickle.load(open(dataset_meta_path, "rb"))
+        if dataset_meta_path is not None:
+            dataset_meta = pickle.load(open(dataset_meta_path, "rb"))
+        else:
+            dataset_meta = None
+            raise ValueError("must provide dataset meta path to make policy")
 
         self.actor: PreTrainedPolicy = make_policy(
             cfg=config,
@@ -130,6 +135,9 @@ class ActorCriticLerobot(nn.Module):
         self.distribution = Normal(mean, std)
 
     def act(self, observations, **kwargs):
+        if isinstance(observations, dict):
+            observations = {k: v.to(self.device) for k, v in observations.items()}
+
         self.update_distribution(observations)
         return self.distribution.sample()
 

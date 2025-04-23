@@ -6,5 +6,6 @@
 """Implementation of different RL agents."""
 
 from .ppo import PPO
+from .ppo_lerobot import PPO_Lerobot
 
-__all__ = ["PPO"]
+__all__ = ["PPO", "PPO_Lerobot"]

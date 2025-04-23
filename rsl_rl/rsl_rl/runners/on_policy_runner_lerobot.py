@@ -15,29 +15,38 @@ import rsl_rl
 from rsl_rl.algorithms import PPO
 from rsl_rl.env import VecEnv
 from rsl_rl.modules import ActorCritic, ActorCriticRecurrent, EmpiricalNormalization
+from rsl_rl.modules.actor_critic_lerobot import ActorCriticLerobot
+
 from rsl_rl.utils import store_code_state
+
+from lerobot.common.policies.pi0.modeling_onesteppi0 import PI0OneStepConfig
 
 
 class OnPolicyRunnerLerobot:
     """On-policy runner for training and evaluation."""
 
-    def __init__(self, env: VecEnv, train_cfg: dict, log_dir: str | None = None, device="cpu"):
+    def __init__(self, env: VecEnv, train_cfg: dict, log_dir: str | None = None, device="cpu", lerobot_cfg: PI0OneStepConfig = PI0OneStepConfig()):
         self.cfg = train_cfg
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
         self.device = device
         self.env = env
+        self.lerobot_cfg = lerobot_cfg
 
         # resolve dimensions of observations
         obs, extras = self.env.get_observations()
         num_obs = obs.shape[1]
         if "critic" in extras["observations"]:
             num_critic_obs = extras["observations"]["critic"].shape[1]
+            critic_obs = extras["observations"]["critic"]
         else:
             num_critic_obs = num_obs
-        actor_critic_class = eval(self.policy_cfg.pop("class_name"))  # ActorCritic
-        actor_critic: ActorCritic | ActorCriticRecurrent = actor_critic_class(
-            num_obs, num_critic_obs, self.env.num_actions, **self.policy_cfg
+            critic_obs = obs
+
+
+        # actor_critic_class = eval(self.policy_cfg.pop("class_name"))  # ActorCritic
+        actor_critic: ActorCriticLerobot = ActorCriticLerobot(
+            num_obs, num_critic_obs, self.env.num_actions, **self.policy_cfg, config=self.lerobot_cfg
         ).to(self.device)
 
         # if using symmetry then pass the environment config object
@@ -63,9 +72,9 @@ class OnPolicyRunnerLerobot:
         self.alg.init_storage(
             self.env.num_envs,
             self.num_steps_per_env,
-            [num_obs],
-            [num_critic_obs],
-            [self.env.num_actions],
+            obs, # change this to a dictionary
+            critic_obs, # change this to a dictionary
+            [self.lerobot_cfg.chunk_size, self.env.num_actions],
         )
 
         # Log
@@ -134,14 +143,17 @@ class OnPolicyRunnerLerobot:
                 for _ in range(self.num_steps_per_env):
                     # Sample actions from policy
                     actions = self.alg.act(obs, critic_obs)
+
+                    breakpoint()
                     # Step environment
                     obs, rewards, dones, infos = self.env.step(actions.to(self.env.device))
 
                     # Move to the agent device
                     obs, rewards, dones = obs.to(self.device), rewards.to(self.device), dones.to(self.device)
 
-                    # Normalize observations
-                    obs = self.obs_normalizer(obs)
+                    # # Normalize observations
+                    # obs = self.obs_normalizer(obs)
+
                     # Extract critic observations and normalize
                     if "critic" in infos["observations"]:
                         critic_obs = self.critic_obs_normalizer(infos["observations"]["critic"].to(self.device))
@@ -356,9 +368,9 @@ class OnPolicyRunnerLerobot:
             saved_dict["rnd_state_dict"] = self.alg.rnd.state_dict()
             saved_dict["rnd_optimizer_state_dict"] = self.alg.rnd_optimizer.state_dict()
         # -- Save observation normalizer if used
-        if self.empirical_normalization:
-            saved_dict["obs_norm_state_dict"] = self.obs_normalizer.state_dict()
-            saved_dict["critic_obs_norm_state_dict"] = self.critic_obs_normalizer.state_dict()
+        # if self.empirical_normalization:
+        #     saved_dict["obs_norm_state_dict"] = self.obs_normalizer.state_dict()
+        #     saved_dict["critic_obs_norm_state_dict"] = self.critic_obs_normalizer.state_dict()
         torch.save(saved_dict, path)
 
         # Upload model to external logging service
@@ -373,9 +385,9 @@ class OnPolicyRunnerLerobot:
         if self.alg.rnd:
             self.alg.rnd.load_state_dict(loaded_dict["rnd_state_dict"])
         # -- Load observation normalizer if used
-        if self.empirical_normalization:
-            self.obs_normalizer.load_state_dict(loaded_dict["obs_norm_state_dict"])
-            self.critic_obs_normalizer.load_state_dict(loaded_dict["critic_obs_norm_state_dict"])
+        # if self.empirical_normalization:
+        #     self.obs_normalizer.load_state_dict(loaded_dict["obs_norm_state_dict"])
+        #     self.critic_obs_normalizer.load_state_dict(loaded_dict["critic_obs_norm_state_dict"])
         # -- Load optimizer if used
         if load_optimizer:
             # -- PPO
@@ -392,10 +404,10 @@ class OnPolicyRunnerLerobot:
         if device is not None:
             self.alg.actor_critic.to(device)
         policy = self.alg.actor_critic.act_inference
-        if self.cfg["empirical_normalization"]:
-            if device is not None:
-                self.obs_normalizer.to(device)
-            policy = lambda x: self.alg.actor_critic.act_inference(self.obs_normalizer(x))  # noqa: E731
+        # if self.cfg["empirical_normalization"]:
+        #     if device is not None:
+        #         self.obs_normalizer.to(device)
+        #     policy = lambda x: self.alg.actor_critic.act_inference(self.obs_normalizer(x))  # noqa: E731
         return policy
 
     def train_mode(self):
@@ -405,9 +417,9 @@ class OnPolicyRunnerLerobot:
         if self.alg.rnd:
             self.alg.rnd.train()
         # -- Normalization
-        if self.empirical_normalization:
-            self.obs_normalizer.train()
-            self.critic_obs_normalizer.train()
+        # if self.empirical_normalization:
+        #     self.obs_normalizer.train()
+        #     self.critic_obs_normalizer.train()
 
     def eval_mode(self):
         # -- PPO

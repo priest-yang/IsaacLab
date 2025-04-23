@@ -14,7 +14,7 @@ from isaaclab.app import AppLauncher
 
 # local imports
 import cli_args  # isort: skip
-
+import json
 
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
@@ -25,7 +25,7 @@ parser.add_argument("--num_envs", type=int, default=32, help="Number of environm
 parser.add_argument("--task", type=str, default="Isaac-Lift-Cube-FrankaOmron-v0", help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
 parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy training iterations.")
-parser.add_argument("--policy_config_path", type=str, default="pi0_onestep", help="Policy to use.")
+parser.add_argument("--pretrained_policy_path", type=str, default="/home/shaoze.yang/IsaacLab/data/hyd_checkpoints/pi0_onestep_0328/checkpoints/epoch_10", help="Policy to use.")
 
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
@@ -132,7 +132,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     env = RslRlVecEnvWrapper(env)
 
     # create runner from rsl-rl
-    runner = OnPolicyRunnerLerobot(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
+    lerobot_cfg = PI0OneStepConfig.from_pretrained(args_cli.pretrained_policy_path)
+    runner = OnPolicyRunnerLerobot(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device, lerobot_cfg=lerobot_cfg)
     # write git state to logs
     runner.add_git_repo_to_log(__file__)
     # load the checkpoint
