@@ -26,19 +26,50 @@ from lerobot.common.datasets.factory import make_dataset
 
 import pickle
 
+
+class Critic(nn.Module):
+    def __init__(self, critic_obs, critic_hidden_dims=[256, 256, 256], activation="elu"):
+        super().__init__()
+        sample_critic_obs = self.prepare_critic_input(critic_obs)
+        num_critic_obs = sample_critic_obs.shape[-1]
+        critic_layers = []
+        activation = resolve_nn_activation(activation)
+        critic_layers.append(nn.Linear(num_critic_obs, critic_hidden_dims[0]))
+        critic_layers.append(activation)
+        for layer_index in range(len(critic_hidden_dims)):
+            if layer_index == len(critic_hidden_dims) - 1:
+                critic_layers.append(nn.Linear(critic_hidden_dims[layer_index], 1))
+            else:
+                critic_layers.append(nn.Linear(critic_hidden_dims[layer_index], critic_hidden_dims[layer_index + 1]))
+                critic_layers.append(activation)
+        self.critic = nn.Sequential(*critic_layers)
+
+    def forward(self, x):
+        x = self.prepare_critic_input(x)
+        return self.critic(x)
+    
+    def prepare_critic_input(self, x):
+        all_inputs = []
+        if isinstance(x, dict):
+            for _, value in x.items():
+                if len(value.shape) == 2: # concat possible inputs, ignore images
+                    all_inputs.append(value)
+            return torch.cat(all_inputs, dim=1)
+        else:
+            return x
+
 class ActorCriticLerobot(nn.Module):
     is_recurrent = False
 
     def __init__(
         self,
-        num_critic_obs,
-        num_actions,
+        critic_obs,
+        config: PI0OneStepConfig = PI0OneStepConfig(),
+        dataset_meta_path: str | None = None,
         critic_hidden_dims=[256, 256, 256],
         activation="elu",
         init_noise_std=0.1,
         noise_std_type: str = "scalar",
-        config: PI0OneStepConfig = PI0OneStepConfig(),
-        dataset_meta_path: str | None = None,
         **kwargs,
     ):
         if kwargs:
@@ -47,9 +78,7 @@ class ActorCriticLerobot(nn.Module):
                 + str([key for key in kwargs.keys()])
             )
         super().__init__()
-        activation = resolve_nn_activation(activation)
-
-        mlp_input_dim_c = num_critic_obs
+        # activation = resolve_nn_activation(activation)
 
         # config
         self.config = config
@@ -67,26 +96,18 @@ class ActorCriticLerobot(nn.Module):
         )
 
         # Value function
-        critic_layers = []
-        critic_layers.append(nn.Linear(mlp_input_dim_c, critic_hidden_dims[0]))
-        critic_layers.append(activation)
-        for layer_index in range(len(critic_hidden_dims)):
-            if layer_index == len(critic_hidden_dims) - 1:
-                critic_layers.append(nn.Linear(critic_hidden_dims[layer_index], 1))
-            else:
-                critic_layers.append(nn.Linear(critic_hidden_dims[layer_index], critic_hidden_dims[layer_index + 1]))
-                critic_layers.append(activation)
-        self.critic = nn.Sequential(*critic_layers)
+        self.critic = Critic(critic_obs, critic_hidden_dims, activation)
 
         # print(f"Actor MLP: {self.actor}")
         # print(f"Critic MLP: {self.critic}")
 
         # Action noise
+        action_dim = self.config.output_features['action'].shape[0]
         self.noise_std_type = noise_std_type
         if self.noise_std_type == "scalar":
-            self.std = nn.Parameter(init_noise_std * torch.ones(self.config.n_action_steps * self.config.max_action_dim))
+            self.std = nn.Parameter(init_noise_std * torch.ones(self.config.n_action_steps * action_dim))
         elif self.noise_std_type == "log":
-            self.log_std = nn.Parameter(torch.log(init_noise_std * torch.ones(self.config.n_action_steps * self.config.max_action_dim)))
+            self.log_std = nn.Parameter(torch.log(init_noise_std * torch.ones(self.config.n_action_steps * action_dim)))
         else:
             raise ValueError(f"Unknown standard deviation type: {self.noise_std_type}. Should be 'scalar' or 'log'")
 
@@ -124,20 +145,18 @@ class ActorCriticLerobot(nn.Module):
     def update_distribution(self, observations):
         # compute mean
         mean = self.actor.act(observations)
+        mean = mean.view(mean.shape[0], -1)
         # compute standard deviation
         if self.noise_std_type == "scalar":
-            std = self.std.expand_as(mean)
+            std = self.std.expand_as(mean).to(mean.device)
         elif self.noise_std_type == "log":
-            std = torch.exp(self.log_std).expand_as(mean)
+            std = torch.exp(self.log_std).expand_as(mean).to(mean.device)
         else:
             raise ValueError(f"Unknown standard deviation type: {self.noise_std_type}. Should be 'scalar' or 'log'")
         # create distribution
         self.distribution = Normal(mean, std)
 
     def act(self, observations, **kwargs):
-        if isinstance(observations, dict):
-            observations = {k: v.to(self.device) for k, v in observations.items()}
-
         self.update_distribution(observations)
         return self.distribution.sample()
 

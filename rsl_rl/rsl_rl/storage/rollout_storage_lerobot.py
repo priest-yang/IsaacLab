@@ -50,15 +50,16 @@ class RolloutStorageLerobot:
         # Core
 
         # change this to a dictionary
+        # breakpoint()
         self.observations = {
-            key: torch.zeros(num_transitions_per_env, num_envs, *shape, device=self.device)
-            for key, shape in sample_obs.items()
+            key: torch.zeros(tuple([num_transitions_per_env, num_envs] + list(obs_item.shape)), device=self.device)
+            for key, obs_item in sample_obs.items()
         }
 
         if privileged_sample_obs is not None:
             self.privileged_observations = {
-                key: torch.zeros(num_transitions_per_env, num_envs, *shape, device=self.device)
-                for key, shape in privileged_sample_obs.items()
+                key: torch.zeros(tuple([num_transitions_per_env, num_envs] + list(privileged_obs_item.shape)), device=self.device)
+                for key, privileged_obs_item in privileged_sample_obs.items()
             }
         else:
             self.privileged_observations = None
