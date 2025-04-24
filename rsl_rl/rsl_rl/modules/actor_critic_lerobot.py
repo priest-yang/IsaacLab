@@ -38,7 +38,7 @@ class ActorCriticLerobot(nn.Module):
         init_noise_std=0.1,
         noise_std_type: str = "scalar",
         config: PI0OneStepConfig = PI0OneStepConfig(),
-        dataset_meta_path: str = "data/dataset_meta.pkl",
+        dataset_meta_path: str | None = None,
         **kwargs,
     ):
         if kwargs:

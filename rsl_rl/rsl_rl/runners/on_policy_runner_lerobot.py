@@ -12,7 +12,7 @@ import torch
 from collections import deque
 
 import rsl_rl
-from rsl_rl.algorithms import PPO
+from rsl_rl.algorithms import PPO, PPOLerobot
 from rsl_rl.env import VecEnv
 from rsl_rl.modules import ActorCritic, ActorCriticRecurrent, EmpiricalNormalization
 from rsl_rl.modules.actor_critic_lerobot import ActorCriticLerobot
@@ -25,7 +25,7 @@ from lerobot.common.policies.pi0.modeling_onesteppi0 import PI0OneStepConfig
 class OnPolicyRunnerLerobot:
     """On-policy runner for training and evaluation."""
 
-    def __init__(self, env: VecEnv, train_cfg: dict, log_dir: str | None = None, device="cpu", lerobot_cfg: PI0OneStepConfig = PI0OneStepConfig()):
+    def __init__(self, env: VecEnv, train_cfg: dict, log_dir: str | None = None, device="cpu", lerobot_cfg: PI0OneStepConfig = PI0OneStepConfig(), policy_meta_path: str = None):
         self.cfg = train_cfg
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
@@ -35,7 +35,9 @@ class OnPolicyRunnerLerobot:
 
         # resolve dimensions of observations
         obs, extras = self.env.get_observations()
-        num_obs = obs.shape[1]
+
+        num_obs = 32 # obs.shape[1] TODO: change this
+
         if "critic" in extras["observations"]:
             num_critic_obs = extras["observations"]["critic"].shape[1]
             critic_obs = extras["observations"]["critic"]
@@ -46,7 +48,7 @@ class OnPolicyRunnerLerobot:
 
         # actor_critic_class = eval(self.policy_cfg.pop("class_name"))  # ActorCritic
         actor_critic: ActorCriticLerobot = ActorCriticLerobot(
-            num_obs, num_critic_obs, self.env.num_actions, **self.policy_cfg, config=self.lerobot_cfg
+            num_obs, num_critic_obs, self.env.num_actions, **self.policy_cfg, config=self.lerobot_cfg, dataset_meta_path=policy_meta_path
         ).to(self.device)
 
         # if using symmetry then pass the environment config object
@@ -55,8 +57,8 @@ class OnPolicyRunnerLerobot:
             self.alg_cfg["symmetry_cfg"]["_env"] = env
 
         # init algorithm
-        alg_class = eval(self.alg_cfg.pop("class_name"))  # PPO
-        self.alg: PPO = alg_class(actor_critic, device=self.device, **self.alg_cfg)
+        # alg_class = eval(self.alg_cfg.pop("class_name"))  # PPO
+        self.alg: PPOLerobot = PPOLerobot(actor_critic, device=self.device, **self.alg_cfg)
 
         # store training configuration
         self.num_steps_per_env = self.cfg["num_steps_per_env"]
