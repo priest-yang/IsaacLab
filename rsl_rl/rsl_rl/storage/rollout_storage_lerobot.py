@@ -50,15 +50,14 @@ class RolloutStorageLerobot:
         # Core
 
         # change this to a dictionary
-        # breakpoint()
         self.observations = {
-            key: torch.zeros(tuple([num_transitions_per_env, num_envs] + list(obs_item.shape)), device=self.device)
+            key: torch.zeros(tuple([num_transitions_per_env] + list(obs_item.shape)), device=self.device)
             for key, obs_item in sample_obs.items()
         }
 
         if privileged_sample_obs is not None:
             self.privileged_observations = {
-                key: torch.zeros(tuple([num_transitions_per_env, num_envs] + list(privileged_obs_item.shape)), device=self.device)
+                key: torch.zeros(tuple([num_transitions_per_env] + list(privileged_obs_item.shape)), device=self.device)
                 for key, privileged_obs_item in privileged_sample_obs.items()
             }
         else:
@@ -92,21 +91,22 @@ class RolloutStorageLerobot:
             raise OverflowError("Rollout buffer overflow! You should call clear() before adding new transitions.")
 
         # Core
+
         for key in self.observations.keys():
             self.observations[key][self.step].copy_(transition.observations[key])
         if self.privileged_observations is not None:
             for key in self.privileged_observations.keys():
                 self.privileged_observations[key][self.step].copy_(transition.critic_observations[key])
         
-        self.actions[self.step].copy_(transition.actions)
+        self.actions[self.step].copy_(transition.actions.view(-1, *self.actions_shape))
         self.rewards[self.step].copy_(transition.rewards.view(-1, 1))
         self.dones[self.step].copy_(transition.dones.view(-1, 1))
 
         # For PPO
         self.values[self.step].copy_(transition.values)
         self.actions_log_prob[self.step].copy_(transition.actions_log_prob.view(-1, 1))
-        self.mu[self.step].copy_(transition.action_mean)
-        self.sigma[self.step].copy_(transition.action_sigma)
+        self.mu[self.step].copy_(transition.action_mean.view(-1, *self.actions_shape))
+        self.sigma[self.step].copy_(transition.action_sigma.view(-1, *self.actions_shape))
 
         # For RND
         if self.rnd_state_shape is not None:
@@ -181,9 +181,17 @@ class RolloutStorageLerobot:
         indices = torch.randperm(num_mini_batches * mini_batch_size, requires_grad=False, device=self.device)
 
         # Core
-        observations = self.observations.flatten(0, 1)
+
+        if isinstance(self.observations, dict):
+            observations = {k: v.flatten(0, 1) for k, v in self.observations.items()}
+        else:
+            observations = self.observations.flatten(0, 1)
+
         if self.privileged_observations is not None:
-            critic_observations = self.privileged_observations.flatten(0, 1)
+            if isinstance(self.privileged_observations, dict):
+                critic_observations = {k: v.flatten(0, 1) for k, v in self.privileged_observations.items()}
+            else:
+                critic_observations = self.privileged_observations.flatten(0, 1)
         else:
             critic_observations = observations
 
@@ -210,8 +218,14 @@ class RolloutStorageLerobot:
 
                 # Create the mini-batch
                 # -- Core
-                obs_batch = observations[batch_idx]
-                critic_observations_batch = critic_observations[batch_idx]
+                if isinstance(observations, dict):
+                    obs_batch = {k: v[batch_idx] for k, v in observations.items()}
+                else:
+                    obs_batch = observations[batch_idx]
+                if isinstance(critic_observations, dict):
+                    critic_observations_batch = {k: v[batch_idx] for k, v in critic_observations.items()}
+                else:
+                    critic_observations_batch = critic_observations[batch_idx]
                 actions_batch = actions[batch_idx]
 
                 # -- For PPO

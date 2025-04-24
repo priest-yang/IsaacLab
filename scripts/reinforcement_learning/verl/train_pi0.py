@@ -27,7 +27,7 @@ parser.add_argument("--task", type=str, default="Isaac-Lift-Cube-FrankaOmron-Cam
 # parser.add_argument("--task", type=str, default="Isaac-Cartpole-RGB-v0", help="Name of the task.")
 
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
-parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy training iterations.")
+parser.add_argument("--max_iterations", type=int, default=1500, help="RL Policy training iterations.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args

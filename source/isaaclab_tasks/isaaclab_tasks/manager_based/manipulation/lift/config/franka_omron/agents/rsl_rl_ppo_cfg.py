@@ -10,8 +10,7 @@ from isaaclab.utils import configclass
 
 @configclass
 class LiftCubePPORunnerCfg(RslRlOnPolicyRunnerCfg):
-    num_steps_per_env = 24
-    max_iterations = 1500
+    num_steps_per_env = 3 # ori:24  for testing
     save_interval = 50
     experiment_name = "franka_lift"
     empirical_normalization = False

@@ -43,7 +43,13 @@ class PPOLerobot:
         rnd_cfg: dict | None = None,
         # Symmetry parameters
         symmetry_cfg: dict | None = None,
+        **kwargs,
     ):
+        if kwargs:
+            print(
+                "PPOLerobot.__init__ got unexpected arguments, which will be ignored: "
+                + str([key for key in kwargs.keys()])
+            )
         self.device = device
 
         self.desired_kl = desired_kl
@@ -217,36 +223,39 @@ class PPOLerobot:
             # we start with 1 and increase it if we use symmetry augmentation
             num_aug = 1
             # original batch size
-            original_batch_size = obs_batch.shape[0]
+            
+            original_batch_size = actions_batch.shape[0] # obs_batch.shape[0]
 
             # check if we should normalize advantages per mini batch
             if self.normalize_advantage_per_mini_batch:
                 with torch.no_grad():
                     advantages_batch = (advantages_batch - advantages_batch.mean()) / (advantages_batch.std() + 1e-8)
 
-            # Perform symmetric augmentation
-            if self.symmetry and self.symmetry["use_data_augmentation"]:
-                # augmentation using symmetry
-                data_augmentation_func = self.symmetry["data_augmentation_func"]
-                # returned shape: [batch_size * num_aug, ...]
-                obs_batch, actions_batch = data_augmentation_func(
-                    obs=obs_batch, actions=actions_batch, env=self.symmetry["_env"], is_critic=False
-                )
-                critic_obs_batch, _ = data_augmentation_func(
-                    obs=critic_obs_batch, actions=None, env=self.symmetry["_env"], is_critic=True
-                )
-                # compute number of augmentations per sample
-                num_aug = int(obs_batch.shape[0] / original_batch_size)
-                # repeat the rest of the batch
-                # -- actor
-                old_actions_log_prob_batch = old_actions_log_prob_batch.repeat(num_aug, 1)
-                # -- critic
-                target_values_batch = target_values_batch.repeat(num_aug, 1)
-                advantages_batch = advantages_batch.repeat(num_aug, 1)
-                returns_batch = returns_batch.repeat(num_aug, 1)
+            # # Perform symmetric augmentation
+            # if self.symmetry and self.symmetry["use_data_augmentation"]:
+            #     # augmentation using symmetry
+            #     data_augmentation_func = self.symmetry["data_augmentation_func"]
+            #     # returned shape: [batch_size * num_aug, ...]
+            #     obs_batch, actions_batch = data_augmentation_func(
+            #         obs=obs_batch, actions=actions_batch, env=self.symmetry["_env"], is_critic=False
+            #     )
+            #     critic_obs_batch, _ = data_augmentation_func(
+            #         obs=critic_obs_batch, actions=None, env=self.symmetry["_env"], is_critic=True
+            #     )
+            #     # compute number of augmentations per sample
+            #     num_aug = int(obs_batch.shape[0] / original_batch_size)
+            #     # repeat the rest of the batch
+            #     # -- actor
+            #     old_actions_log_prob_batch = old_actions_log_prob_batch.repeat(num_aug, 1)
+            #     # -- critic
+            #     target_values_batch = target_values_batch.repeat(num_aug, 1)
+            #     advantages_batch = advantages_batch.repeat(num_aug, 1)
+            #     returns_batch = returns_batch.repeat(num_aug, 1)
 
             # Recompute actions log prob and entropy for current batch of transitions
             # Note: we need to do this because we updated the actor_critic with the new parameters
+
+
             # -- actor
             self.actor_critic.act(obs_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
             actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)
@@ -264,8 +273,8 @@ class PPOLerobot:
             if self.desired_kl is not None and self.schedule == "adaptive":
                 with torch.inference_mode():
                     kl = torch.sum(
-                        torch.log(sigma_batch / old_sigma_batch + 1.0e-5)
-                        + (torch.square(old_sigma_batch) + torch.square(old_mu_batch - mu_batch))
+                        torch.log(sigma_batch / old_sigma_batch.flatten(1) + 1.0e-5)
+                        + (torch.square(old_sigma_batch.flatten(1)) + torch.square(old_mu_batch.flatten(1) - mu_batch.flatten(1)))
                         / (2.0 * torch.square(sigma_batch))
                         - 0.5,
                         axis=-1,

@@ -36,7 +36,10 @@ class OnPolicyRunnerLerobot:
         # resolve dimensions of observations
         obs, extras = self.env.get_observations()
 
-        num_obs = 32 # obs.shape[1] TODO: change this
+        if isinstance(obs, dict):
+            num_obs = sum(item.shape[1] for item in obs.values())
+        else:
+            num_obs = obs.shape[1]
 
         if "critic" in extras["observations"]:
             num_critic_obs = extras["observations"]["critic"].shape[1]
@@ -48,7 +51,7 @@ class OnPolicyRunnerLerobot:
 
         # actor_critic_class = eval(self.policy_cfg.pop("class_name"))  # ActorCritic
         actor_critic: ActorCriticLerobot = ActorCriticLerobot(
-            num_obs, num_critic_obs, self.env.num_actions, **self.policy_cfg, config=self.lerobot_cfg, dataset_meta_path=policy_meta_path
+            critic_obs, config=self.lerobot_cfg, dataset_meta_path=policy_meta_path, **self.policy_cfg, 
         ).to(self.device)
 
         # if using symmetry then pass the environment config object
@@ -71,6 +74,7 @@ class OnPolicyRunnerLerobot:
             self.obs_normalizer = torch.nn.Identity().to(self.device)  # no normalization
             self.critic_obs_normalizer = torch.nn.Identity().to(self.device)  # no normalization
         # init storage and model
+
         self.alg.init_storage(
             self.env.num_envs,
             self.num_steps_per_env,
@@ -120,7 +124,10 @@ class OnPolicyRunnerLerobot:
         # start learning
         obs, extras = self.env.get_observations()
         critic_obs = extras["observations"].get("critic", obs)
-        obs, critic_obs = obs.to(self.device), critic_obs.to(self.device)
+        if isinstance(obs, dict):
+            obs, critic_obs = {key: item.to(self.device) for key, item in obs.items()}, {key: item.to(self.device) for key, item in critic_obs.items()}
+        else:
+            obs, critic_obs = obs.to(self.device), critic_obs.to(self.device)
         self.train_mode()  # switch to train mode (for dropout for example)
 
         # Book keeping
@@ -145,13 +152,25 @@ class OnPolicyRunnerLerobot:
                 for _ in range(self.num_steps_per_env):
                     # Sample actions from policy
                     actions = self.alg.act(obs, critic_obs)
+                    actions = actions.view(actions.shape[0], self.lerobot_cfg.chunk_size,-1)
 
-                    breakpoint()
                     # Step environment
-                    obs, rewards, dones, infos = self.env.step(actions.to(self.env.device))
+                    rewards = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
+                    dones = torch.zeros(self.env.num_envs, dtype=torch.bool, device=self.device)
+                    for i in range(self.lerobot_cfg.chunk_size):
+                        step_obs, step_rewards, step_dones, step_infos = self.env.step(actions[:, i, :].to(self.env.device))
+                        obs = step_obs
+                        rewards += step_rewards
+                        dones = dones | step_dones
+                        infos = step_infos
 
                     # Move to the agent device
-                    obs, rewards, dones = obs.to(self.device), rewards.to(self.device), dones.to(self.device)
+                    if isinstance(obs, dict):
+                        obs = {key: item.to(self.device) for key, item in obs.items()}
+                    else:
+                        obs = obs.to(self.device)
+                    rewards = rewards.to(self.device)
+                    dones = dones.to(self.device)
 
                     # # Normalize observations
                     # obs = self.obs_normalizer(obs)
@@ -163,6 +182,7 @@ class OnPolicyRunnerLerobot:
                         critic_obs = obs
 
                     # Process env step and store in buffer
+                    # breakpoint()
                     self.alg.process_env_step(rewards, dones, infos)
 
                     # Intrinsic rewards (extracted here only for logging)!
