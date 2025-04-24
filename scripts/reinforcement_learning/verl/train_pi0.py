@@ -14,8 +14,8 @@ from isaaclab.app import AppLauncher
 
 # local imports
 import cli_args  # isort: skip
-from utils import prepare_inference_batch_pi0, load_pi0_policy
 
+from lerobot.common.policies.pi0.isaac_utils import prepare_inference_batch_pi0, load_pi0_policy
 
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")

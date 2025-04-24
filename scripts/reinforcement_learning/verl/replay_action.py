@@ -315,7 +315,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     pd.DataFrame(all_states).to_csv(os.path.join(log_dir, "states.csv"), index=False)
     # all_actions.to_csv(os.path.join(log_dir, "actions.csv"), index=False)
 
-    from utils import plot_action_trajectories
+    from lerobot.common.policies.pi0.isaac_utils import plot_action_trajectories
     # plot_action_trajectories(os.path.join(log_dir, "actions.csv"), os.path.join(log_dir, "states.csv"), os.path.join(log_dir))
 
 
